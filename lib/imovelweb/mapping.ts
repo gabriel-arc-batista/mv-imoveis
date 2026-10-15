@@ -1,7 +1,7 @@
 import type { Property, PropertyTransaction, PropertyType } from "@/lib/types";
 
-// Conversão entre o imóvel do site e o anúncio OpenNavent (API e XML do
-// Imovelweb). Documentação: https://open-classifieds.notion.site/bra
+// Conversão entre o imóvel do site e o anúncio da API OpenNavent do
+// Imovelweb. Documentação: https://open-classifieds.notion.site/bra
 // Os IDs abaixo aparecem no exemplo oficial de anúncio da API
 // ("2.5 Gestão de anúncios") e no catálogo /v1/tipopropriedade.
 

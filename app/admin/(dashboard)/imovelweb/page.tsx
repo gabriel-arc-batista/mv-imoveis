@@ -1,6 +1,6 @@
 import Script from "next/script";
 import { createClient } from "@/lib/supabase/server";
-import { getApiConfig, getFeedConfig, missingApiEnv } from "@/lib/imovelweb/config";
+import { getApiConfig, missingApiEnv } from "@/lib/imovelweb/config";
 import { checkImovelwebConnection, type SyncSummary } from "@/lib/imovelweb/sync";
 import { ImovelwebSyncButton } from "@/components/admin/ImovelwebSyncButton";
 import { badge, card } from "@/components/admin/ui";
@@ -15,7 +15,6 @@ const dateTime = (value: string) =>
 
 export default async function ImovelwebPage() {
   const config = getApiConfig();
-  const feed = getFeedConfig();
   const missing = missingApiEnv();
   const connection = await checkImovelwebConnection();
 
@@ -53,12 +52,6 @@ export default async function ImovelwebPage() {
               </p>
             )}
           </div>
-        ) : feed ? (
-          <p className="mt-3 text-sm text-admin-ink-soft">
-            <span className={badge("accent")}>Somente feed XML</span> O site publica no
-            Imovelweb pelo feed, mas não importa anúncios de lá. Para importar,
-            configure as credenciais da API.
-          </p>
         ) : (
           <div className="mt-3 text-sm text-admin-ink-soft">
             <p>

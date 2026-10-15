@@ -1,9 +1,6 @@
 import type { ContactConfig } from "./mapping";
 
 // Variáveis de ambiente da integração (todas só no servidor).
-// Modo API: publica do site e importa do Imovelweb. Modo XML: só publica,
-// por /imovelweb/feed.xml. Com credenciais de API, o feed XML fica desligado,
-// porque o XML tiraria do ar os anúncios importados que não estão no arquivo.
 
 const env = (name: string) => process.env[name]?.trim() || undefined;
 
@@ -46,17 +43,6 @@ export function getApiConfig(): ApiConfig | null {
     codigoImobiliaria: env("IMOVELWEB_CODIGO_IMOBILIARIA")!,
     estado: env("IMOVELWEB_ESTADO") ?? "Pernambuco",
     integrador: env("IMOVELWEB_INTEGRADOR"),
-    contato: contato(),
-  };
-}
-
-export function getFeedConfig() {
-  const codigoImobiliaria = env("IMOVELWEB_CODIGO_IMOBILIARIA");
-  if (!codigoImobiliaria || !env("NEXT_PUBLIC_SUPABASE_URL") || getApiConfig()) return null;
-  return {
-    codigoImobiliaria,
-    estado: env("IMOVELWEB_ESTADO") ?? "Pernambuco",
-    token: env("IMOVELWEB_FEED_TOKEN"),
     contato: contato(),
   };
 }

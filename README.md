@@ -129,23 +129,12 @@ disponíveis (cada anúncio publicado pelo site ocupa um anúncio do plano).
 4. Em `/admin/imovelweb`, use o botão de vínculo com o usuário administrador
    do Imovelweb e depois **Sincronizar agora**.
 
-### Alternativa: só feed XML
-
-Se o Imovelweb liberar só XML, configure `IMOVELWEB_CODIGO_IMOBILIARIA` e
-`IMOVELWEB_FEED_TOKEN` (sem as credenciais de API) e informe a eles a URL
-`https://<domínio>/imovelweb/feed.xml?token=<IMOVELWEB_FEED_TOKEN>`. Nesse modo
-o site só publica, não importa. Com credenciais de API o feed se desliga,
-porque o XML tira do ar todo anúncio que não está no arquivo, inclusive os
-importados. Se o banco falhar ou nenhum imóvel estiver pronto, o feed
-responde 503 em vez de um arquivo vazio.
-
 ### Arquivos
 
 - `lib/imovelweb/mapping.ts`: conversão entre imóvel e anúncio (IDs de tipo e
   características do catálogo OpenNavent Brasil).
 - `lib/imovelweb/client.ts`: cliente da API.
 - `lib/imovelweb/sync.ts`: sincronização nos dois sentidos.
-- `lib/imovelweb/feed.ts` e `app/imovelweb/feed.xml/route.ts`: feed XML.
 - `app/api/imovelweb/sync/route.ts`: rota do Vercel Cron.
 
 ## Estrutura

@@ -125,7 +125,16 @@ function isMissingImovelwebColumns(error: { message?: string } | null) {
 }
 
 const MISSING_IMOVELWEB_COLUMNS =
-  "Atualize o banco de dados (migration do Imovelweb) antes de salvar.";
+  "Atualize o banco de dados (migration do Imovelweb) antes de usar preço ou publicar no Imovelweb.";
+
+// Banco ainda sem a migration do Imovelweb: se o imóvel não usa esses campos,
+// salva sem eles. Devolve null quando há dados que não podem ser descartados.
+function withoutUnusedImovelwebFields<T extends { price: number | null; publish_imovelweb: boolean }>(
+  row: T
+) {
+  const { price, publish_imovelweb, ...legacy } = row;
+  return price == null && !publish_imovelweb ? legacy : null;
+}
 
 export async function createProperty(
   _prevState: ActionState,
@@ -151,6 +160,15 @@ export async function createProperty(
     .insert({ ...rest, features: featuresArray, slug })
     .select("id")
     .single();
+
+  const legacyFields = isMissingImovelwebColumns(error) ? withoutUnusedImovelwebFields(rest) : null;
+  if (legacyFields) {
+    ({ data, error } = await supabase
+      .from("properties")
+      .insert({ ...legacyFields, features: featuresArray, slug })
+      .select("id")
+      .single());
+  }
 
   if (isMissingTransactionColumn(error) && rest.transaction_type === "venda") {
     const { transaction_type: _transactionType, ...legacyRest } = rest;
@@ -208,6 +226,14 @@ export async function updateProperty(
     .from("properties")
     .update({ ...rest, features: featuresArray })
     .eq("id", propertyId);
+
+  const legacyFields = isMissingImovelwebColumns(error) ? withoutUnusedImovelwebFields(rest) : null;
+  if (legacyFields) {
+    ({ error } = await supabase
+      .from("properties")
+      .update({ ...legacyFields, features: featuresArray })
+      .eq("id", propertyId));
+  }
 
   if (isMissingTransactionColumn(error) && rest.transaction_type === "venda") {
     const { transaction_type: _transactionType, ...legacyRest } = rest;

@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { runImovelwebSync } from "@/lib/imovelweb/sync";
+import { isImovelwebApiEnabled, runImovelwebSync } from "@/lib/imovelweb/sync";
 
 // Chamada pelo Vercel Cron (vercel.json). A Vercel envia
 // "Authorization: Bearer <CRON_SECRET>" quando a variável existe.
@@ -16,6 +16,8 @@ function authorized(request: Request) {
 
 export async function GET(request: Request) {
   if (!authorized(request)) return new Response("Not found", { status: 404 });
+  // Sem credenciais do Imovelweb ainda: nada a fazer, sem gerar alerta de erro.
+  if (!isImovelwebApiEnabled()) return Response.json({ skipped: "Integração não configurada" });
   const summary = await runImovelwebSync("cron");
   return Response.json(summary, { status: summary.ok ? 200 : 500 });
 }
