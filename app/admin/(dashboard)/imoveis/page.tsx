@@ -5,9 +5,10 @@ import { setPropertyStatus } from "@/app/admin/actions";
 import { DeletePropertyButton } from "@/components/admin/DeletePropertyButton";
 import { AdminPhotoCarousel } from "@/components/admin/AdminPhotoCarousel";
 import { badge, button, card } from "@/components/admin/ui";
+import { ImovelwebStatus } from "@/components/admin/ImovelwebStatus";
 
 export default async function AdminImoveisPage() {
-  const properties = await getProperties({ includeSold: true });
+  const properties = await getProperties({ includeSold: true, includeOffline: true });
 
   return (
     <div>
@@ -84,6 +85,10 @@ export default async function AdminImoveisPage() {
                       .filter(Boolean)
                       .join(", ") || "Local não definido"}
                   </p>
+
+                  <div className="mt-3 empty:hidden">
+                    <ImovelwebStatus property={property} />
+                  </div>
 
                   <div className="mt-4 flex items-center justify-between border-t border-admin-border pt-4">
                     <span className="text-xs text-admin-ink-soft">

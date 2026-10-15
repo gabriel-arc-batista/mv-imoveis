@@ -18,7 +18,10 @@ export function DeletePropertyButton({
       `Remover definitivamente o imóvel "${title}"? Esta ação não pode ser desfeita.`
     );
     if (!confirmed) return;
-    startTransition(() => deleteProperty(propertyId));
+    startTransition(async () => {
+      const result = await deleteProperty(propertyId);
+      if (result?.error) window.alert(result.error);
+    });
   }
 
   return (

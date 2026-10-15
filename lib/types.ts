@@ -7,6 +7,7 @@ export type PropertyType =
 
 export type PropertyStatus = "disponivel" | "vendido";
 export type PropertyTransaction = "venda" | "aluguel";
+export type PropertySource = "site" | "imovelweb";
 
 export type City = {
   id: string;
@@ -26,6 +27,7 @@ export type PropertyPhoto = {
   storage_path: string;
   position: number;
   is_cover: boolean;
+  source_url?: string | null;
 };
 
 export type Property = {
@@ -47,6 +49,15 @@ export type Property = {
   parking_spots: number | null;
   features: string[];
   is_featured: boolean;
+  price?: number | null;
+  publish_imovelweb?: boolean;
+  source?: PropertySource;
+  imovelweb_id?: number | null;
+  imovelweb_modified_at?: string | null;
+  imovelweb_published_at?: string | null;
+  imovelweb_hash?: string | null;
+  imovelweb_offline_at?: string | null;
+  imovelweb_error?: string | null;
   created_at: string;
   updated_at: string;
   city?: City;

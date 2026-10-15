@@ -30,6 +30,7 @@ export async function getFeaturedProperties(limit = 6): Promise<Property[]> {
     .select(PROPERTY_SELECT)
     .eq("is_featured", true)
     .eq("status", "disponivel")
+    .is("imovelweb_offline_at", null)
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -44,6 +45,8 @@ export type PropertyFilters = {
   type?: string;
   transactionType?: PropertyTransaction;
   includeSold?: boolean;
+  // Importados que saíram do ar no Imovelweb: só o painel mostra.
+  includeOffline?: boolean;
 };
 
 export async function getProperties(
@@ -58,6 +61,9 @@ export async function getProperties(
 
   if (!filters.includeSold) {
     query = query.eq("status", "disponivel");
+  }
+  if (!filters.includeOffline) {
+    query = query.is("imovelweb_offline_at", null);
   }
   if (filters.cityId) {
     query = query.eq("city_id", filters.cityId);
@@ -108,6 +114,7 @@ export async function getPropertyBySlug(
     .from("properties")
     .select(PROPERTY_SELECT)
     .eq("slug", slug)
+    .is("imovelweb_offline_at", null)
     .maybeSingle();
 
   if (error) throw error;

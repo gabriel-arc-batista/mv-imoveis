@@ -3,6 +3,7 @@ import { getCities, getNeighborhoods, getPropertyById } from "@/lib/queries";
 import { updateProperty } from "@/app/admin/actions";
 import { PropertyForm } from "@/components/admin/PropertyForm";
 import { PhotoManager } from "@/components/admin/PhotoManager";
+import { ImovelwebStatus } from "@/components/admin/ImovelwebStatus";
 import { card } from "@/components/admin/ui";
 
 export default async function EditarImovelPage({
@@ -27,6 +28,18 @@ export default async function EditarImovelPage({
       <p className="mt-1 text-sm text-admin-ink-soft">
         Código {property.code}
       </p>
+      <div className="mt-3 empty:hidden">
+        <ImovelwebStatus property={property} />
+      </div>
+
+      {property.source === "imovelweb" && (
+        <p className="mt-6 max-w-2xl rounded-lg bg-admin-accent-soft px-4 py-3 text-sm text-admin-accent">
+          Este imóvel vem do Imovelweb. Título, descrição, preço, características,
+          localização e fotos são atualizados de lá sempre que o anúncio muda.
+          Para alterar esses dados, edite o anúncio no Imovelweb. Aqui você pode
+          marcar destaque e status.
+        </p>
+      )}
 
       <div className={`mt-8 max-w-2xl p-6 sm:p-8 ${card}`}>
         <PropertyForm

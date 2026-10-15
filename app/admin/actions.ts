@@ -2,12 +2,29 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/supabase/admin";
 import { makeUniqueSlug } from "@/lib/slug";
+import {
+  prepareDeletion,
+  pushPropertyToImovelweb,
+  runImovelwebSync,
+  type SyncSummary,
+} from "@/lib/imovelweb/sync";
 
 export type ActionState = { error?: string; success?: boolean } | null;
+
+// Envia a alteração ao Imovelweb depois de responder, sem atrasar o painel.
+// Sem a integração configurada, não faz nada.
+function syncWithImovelweb(propertyId: string) {
+  after(() =>
+    pushPropertyToImovelweb(propertyId).catch((error) =>
+      console.error("[imovelweb]", error instanceof Error ? error.message : error)
+    )
+  );
+}
 
 export async function signIn(
   _prevState: ActionState,
@@ -71,6 +88,8 @@ const propertySchema = z.object({
   parking_spots: z.coerce.number().int().min(0).optional(),
   features: z.string().trim().default(""),
   is_featured: z.coerce.boolean().default(false),
+  price: z.coerce.number().positive("O preço deve ser maior que zero.").nullable(),
+  publish_imovelweb: z.boolean().default(false),
 });
 
 function parsePropertyForm(formData: FormData) {
@@ -78,6 +97,9 @@ function parsePropertyForm(formData: FormData) {
   return propertySchema.safeParse({
     ...raw,
     is_featured: formData.get("is_featured") === "on",
+    publish_imovelweb: formData.get("publish_imovelweb") === "on",
+    // null (e não undefined) para que apagar o preço também limpe o banco.
+    price: raw.price || null,
     area_m2: raw.area_m2 || undefined,
     bedrooms: raw.bedrooms || undefined,
     bathrooms: raw.bathrooms || undefined,
@@ -95,6 +117,15 @@ function isMissingTransactionColumn(error: { code?: string; message?: string } |
         error.message?.includes("transaction_type"))
   );
 }
+
+function isMissingImovelwebColumns(error: { message?: string } | null) {
+  return Boolean(
+    error?.message?.includes("publish_imovelweb") || error?.message?.includes("'price'")
+  );
+}
+
+const MISSING_IMOVELWEB_COLUMNS =
+  "Atualize o banco de dados (migration do Imovelweb) antes de salvar.";
 
 export async function createProperty(
   _prevState: ActionState,
@@ -135,7 +166,9 @@ export async function createProperty(
 
   if (error) {
     return {
-      error: isMissingTransactionColumn(error)
+      error: isMissingImovelwebColumns(error)
+        ? MISSING_IMOVELWEB_COLUMNS
+        : isMissingTransactionColumn(error)
         ? "Atualize o banco de dados antes de cadastrar um imóvel para aluguel."
         : error.code === "23505"
           ? "Já existe um imóvel com esse código."
@@ -149,6 +182,7 @@ export async function createProperty(
 
   revalidatePath("/admin/imoveis");
   revalidatePath("/imoveis");
+  syncWithImovelweb(data.id);
   redirect(`/admin/imoveis/${data.id}`);
 }
 
@@ -187,7 +221,9 @@ export async function updateProperty(
 
   if (error) {
     return {
-      error: isMissingTransactionColumn(error)
+      error: isMissingImovelwebColumns(error)
+        ? MISSING_IMOVELWEB_COLUMNS
+        : isMissingTransactionColumn(error)
         ? "Atualize o banco de dados antes de marcar um imóvel para aluguel."
         : error.code === "23505"
           ? "Já existe um imóvel com esse código."
@@ -198,6 +234,7 @@ export async function updateProperty(
   revalidatePath("/admin/imoveis");
   revalidatePath(`/admin/imoveis/${propertyId}`);
   revalidatePath("/imoveis");
+  syncWithImovelweb(propertyId);
   return { success: true };
 }
 
@@ -206,13 +243,18 @@ export async function setPropertyStatus(propertyId: string, status: "disponivel"
   await supabase.from("properties").update({ status }).eq("id", propertyId);
   revalidatePath("/admin/imoveis");
   revalidatePath("/imoveis");
+  syncWithImovelweb(propertyId);
 }
 
-export async function deleteProperty(propertyId: string) {
+export async function deleteProperty(propertyId: string): Promise<ActionState> {
   const { supabase } = await requireAdmin();
+  // Publicado no Imovelweb: sai de lá antes de sumir daqui.
+  const blocked = await prepareDeletion(propertyId);
+  if (blocked) return { error: blocked };
   await supabase.from("properties").delete().eq("id", propertyId);
   revalidatePath("/admin/imoveis");
   revalidatePath("/imoveis");
+  return { success: true };
 }
 
 export async function addPhotos(
@@ -241,6 +283,7 @@ export async function addPhotos(
 
   revalidatePath(`/admin/imoveis/${propertyId}`);
   revalidatePath("/imoveis");
+  syncWithImovelweb(propertyId);
 }
 
 export async function deletePhoto(propertyId: string, photoId: string, storagePath: string) {
@@ -249,6 +292,7 @@ export async function deletePhoto(propertyId: string, photoId: string, storagePa
   await supabase.from("property_photos").delete().eq("id", photoId);
   revalidatePath(`/admin/imoveis/${propertyId}`);
   revalidatePath("/imoveis");
+  syncWithImovelweb(propertyId);
 }
 
 export async function setCoverPhoto(propertyId: string, photoId: string) {
@@ -260,6 +304,7 @@ export async function setCoverPhoto(propertyId: string, photoId: string) {
   await supabase.from("property_photos").update({ is_cover: true }).eq("id", photoId);
   revalidatePath(`/admin/imoveis/${propertyId}`);
   revalidatePath("/imoveis");
+  syncWithImovelweb(propertyId);
 }
 
 export async function reorderPhoto(propertyId: string, photoId: string, direction: "up" | "down") {
@@ -283,6 +328,7 @@ export async function reorderPhoto(propertyId: string, photoId: string, directio
   await supabase.from("property_photos").update({ position: a.position }).eq("id", b.id);
 
   revalidatePath(`/admin/imoveis/${propertyId}`);
+  syncWithImovelweb(propertyId);
 }
 
 const citySchema = z.object({ name: z.string().trim().min(2, "Informe o nome da cidade.") });
@@ -323,4 +369,13 @@ export async function createNeighborhood(
 
   revalidatePath("/admin/cidades");
   return { success: true };
+}
+
+export type SyncState = { summary: SyncSummary } | null;
+
+export async function syncImovelwebNow(): Promise<SyncState> {
+  await requireAdmin();
+  const summary = await runImovelwebSync("manual");
+  revalidatePath("/admin", "layout");
+  return { summary };
 }

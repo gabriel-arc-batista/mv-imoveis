@@ -233,6 +233,38 @@ export function PropertyForm({
         Exibir em destaque na página inicial
       </label>
 
+      {property?.source === "imovelweb" ? (
+        // Preço vem do Imovelweb; preservado ao salvar destaque e status.
+        <input type="hidden" name="price" value={property.price ?? ""} />
+      ) : (
+        <fieldset className="flex flex-col gap-4 rounded-xl border border-admin-border p-4">
+          <legend className="px-1 text-sm font-semibold text-admin-ink">Imovelweb</legend>
+          <Field label="Preço (R$)" htmlFor="price">
+            <input
+              id="price"
+              name="price"
+              type="number"
+              min="1"
+              step="1"
+              defaultValue={property?.price ?? ""}
+              className={inputClass}
+            />
+            <span className="text-xs text-admin-ink-soft">
+              Não aparece no site. O Imovelweb só publica anúncios com preço.
+            </span>
+          </Field>
+          <label className="flex items-center gap-2 text-sm text-admin-ink-soft">
+            <input
+              type="checkbox"
+              name="publish_imovelweb"
+              defaultChecked={property?.publish_imovelweb}
+              className="focus-ring h-4 w-4 accent-(--color-admin-accent)"
+            />
+            Publicar no Imovelweb (precisa de preço, descrição e ao menos uma foto)
+          </label>
+        </fieldset>
+      )}
+
       {state?.error && (
         <p
           role="alert"
