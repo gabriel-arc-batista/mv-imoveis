@@ -3,12 +3,14 @@ import path from "node:path";
 
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",
+  // loginbr-open.navent.com: botão oficial de vínculo com o Imovelweb (/admin/imovelweb).
+  "script-src 'self' 'unsafe-inline' https://loginbr-open.navent.com",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https://*.supabase.co",
+  "img-src 'self' data: https://*.supabase.co https://loginbr-open.navent.com",
   "font-src 'self' data:",
   "media-src 'self'",
-  "connect-src 'self' https://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co https://loginbr-open.navent.com",
+  "frame-src https://loginbr-open.navent.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

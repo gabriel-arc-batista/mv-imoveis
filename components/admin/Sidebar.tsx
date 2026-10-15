@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin", label: "Visão geral", icon: OverviewIcon },
   { href: "/admin/imoveis", label: "Imóveis", icon: BuildingIcon },
   { href: "/admin/cidades", label: "Cidades e bairros", icon: MapIcon },
+  { href: "/admin/imovelweb", label: "Imovelweb", icon: SyncIcon },
 ];
 
 export function Sidebar({ email }: { email: string }) {
@@ -154,6 +155,14 @@ function MapIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
       <path d="M9 20 3.5 18V5L9 7m0 13 6-2m-6 2V7m6 11 5.5 2V7L15 5m0 13V5m0 0L9 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SyncIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
+      <path d="M4 9a8 8 0 0 1 14.5-3.5L20 7M20 3v4h-4M20 15a8 8 0 0 1-14.5 3.5L4 17m0 4v-4h4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

@@ -40,6 +40,17 @@ create table public.properties (
   parking_spots int,
   features text[] not null default '{}',
   is_featured boolean not null default false,
+  -- Integração com o Imovelweb (ver migrations/20261015_add_imovelweb_fields.sql).
+  -- O preço não é exibido no site; o Imovelweb exige.
+  price numeric check (price is null or price > 0),
+  publish_imovelweb boolean not null default false,
+  source text not null default 'site' check (source in ('site', 'imovelweb')),
+  imovelweb_id bigint unique,
+  imovelweb_modified_at text,
+  imovelweb_published_at timestamptz,
+  imovelweb_hash text,
+  imovelweb_offline_at timestamptz,
+  imovelweb_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -51,6 +62,7 @@ create table public.property_photos (
   storage_path text not null,
   position int not null default 0,
   is_cover boolean not null default false,
+  source_url text,
   created_at timestamptz not null default now()
 );
 
@@ -119,6 +131,19 @@ create policy "property_photos_admin_update" on storage.objects
 
 create policy "property_photos_admin_delete" on storage.objects
   for delete using (bucket_id = 'property-photos' and public.is_admin());
+
+create table public.imovelweb_sync_runs (
+  id bigint generated always as identity primary key,
+  started_at timestamptz not null default now(),
+  finished_at timestamptz,
+  ok boolean,
+  summary jsonb not null default '{}'
+);
+
+alter table public.imovelweb_sync_runs enable row level security;
+
+create policy "imovelweb_sync_runs_admin_read" on public.imovelweb_sync_runs
+  for select using (public.is_admin());
 
 create index properties_city_id_idx on public.properties(city_id);
 create index properties_neighborhood_id_idx on public.properties(neighborhood_id);

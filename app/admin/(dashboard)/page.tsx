@@ -4,7 +4,7 @@ import { button, card } from "@/components/admin/ui";
 
 export default async function AdminHomePage() {
   const [all, cities] = await Promise.all([
-    getProperties({ includeSold: true }),
+    getProperties({ includeSold: true, includeOffline: true }),
     getCities(),
   ]);
 

@@ -90,6 +90,53 @@ layout. Basta adicionar o vídeo (idealmente um imóvel em destaque, sem
    autorizado para produção, ajuste `app/robots.ts` e o `robots` em
    `app/layout.tsx` para permitir indexação.
 
+## 8. Integração com o Imovelweb
+
+Funciona nos dois sentidos, pela API OpenNavent do Imovelweb
+([documentação oficial](https://open-classifieds.notion.site/bra)):
+
+- **Site → Imovelweb:** imóvel cadastrado no painel com **Preço** e
+  **Publicar no Imovelweb** marcado vira anúncio no Imovelweb. Alterações,
+  fotos, "vendido" e exclusão são repassadas. O preço não aparece no site.
+- **Imovelweb → site:** anúncio cadastrado direto no Imovelweb aparece no site,
+  com fotos copiadas para o Supabase. Se sair do ar no Imovelweb, some do site.
+  Esses imóveis são editados no Imovelweb; no painel, só destaque e status.
+
+Cada anúncio pertence a um lado só (coluna `source`), então um lado nunca
+sobrescreve o outro.
+
+Quando sincroniza: ao salvar um imóvel ou mexer nas fotos (envio imediato),
+todo dia às 6h (Vercel Cron, `vercel.json`) e pelo botão **Sincronizar agora**
+em `/admin/imovelweb`.
+
+Entram no Imovelweb só os imóveis marcados, disponíveis, com preço,
+descrição, ao menos uma foto e tipo diferente de "Outro". O painel mostra o
+que falta em cada um e as recusas do Imovelweb. Exemplo: plano sem anúncios
+disponíveis (cada anúncio publicado pelo site ocupa um anúncio do plano).
+
+### Ativação
+
+1. Rode `supabase/migrations/20261015_add_imovelweb_fields.sql` no SQL Editor
+   **antes** de publicar esta versão.
+2. Peça ao Imovelweb (integracao@imovelweb.com.br) credenciais de API com
+   permissão de **escrita e leitura** (a leitura completa dos anúncios exige
+   essa permissão), primeiro no sandbox e depois em produção. Eles informam
+   `client_id`, `client_secret` e o nome do integrador.
+3. Configure na Vercel: `IMOVELWEB_CLIENT_ID`, `IMOVELWEB_CLIENT_SECRET`,
+   `IMOVELWEB_INTEGRADOR`, `IMOVELWEB_CODIGO_IMOBILIARIA` (ex.: `mv-imoveis`),
+   `SUPABASE_SERVICE_ROLE_KEY` e `CRON_SECRET`. Para testar no sandbox,
+   `IMOVELWEB_API_URL=https://api-br-sandbox-open.navent.com`.
+4. Em `/admin/imovelweb`, use o botão de vínculo com o usuário administrador
+   do Imovelweb e depois **Sincronizar agora**.
+
+### Arquivos
+
+- `lib/imovelweb/mapping.ts`: conversão entre imóvel e anúncio (IDs de tipo e
+  características do catálogo OpenNavent Brasil).
+- `lib/imovelweb/client.ts`: cliente da API.
+- `lib/imovelweb/sync.ts`: sincronização nos dois sentidos.
+- `app/api/imovelweb/sync/route.ts`: rota do Vercel Cron.
+
 ## Estrutura
 
 - `app/(site)` — site público (home, catálogo, página do imóvel).

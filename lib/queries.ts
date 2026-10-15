@@ -14,6 +14,11 @@ const PROPERTY_SELECT =
 const isSupabaseConfigured = () =>
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
 
+// Banco ainda sem a migration do Imovelweb: a coluna não existe e nenhum
+// imóvel está fora do ar, então a consulta é refeita sem esse filtro.
+const missingOfflineColumn = (error: { message?: string } | null) =>
+  Boolean(error?.message?.includes("imovelweb_offline_at"));
+
 function sortPhotos(property: Property): Property {
   if (!property.photos) return property;
   return {
@@ -25,14 +30,18 @@ function sortPhotos(property: Property): Property {
 export async function getFeaturedProperties(limit = 6): Promise<Property[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("properties")
-    .select(PROPERTY_SELECT)
-    .eq("is_featured", true)
-    .eq("status", "disponivel")
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const run = (hideOffline: boolean) => {
+    let query = supabase
+      .from("properties")
+      .select(PROPERTY_SELECT)
+      .eq("is_featured", true)
+      .eq("status", "disponivel");
+    if (hideOffline) query = query.is("imovelweb_offline_at", null);
+    return query.order("created_at", { ascending: false }).limit(limit);
+  };
 
+  let { data, error } = await run(true);
+  if (missingOfflineColumn(error)) ({ data, error } = await run(false));
   if (error) throw error;
   return (data ?? []).map((p) => sortPhotos(p as Property));
 }
@@ -44,6 +53,8 @@ export type PropertyFilters = {
   type?: string;
   transactionType?: PropertyTransaction;
   includeSold?: boolean;
+  // Importados que saíram do ar no Imovelweb: só o painel mostra.
+  includeOffline?: boolean;
 };
 
 export async function getProperties(
@@ -58,6 +69,9 @@ export async function getProperties(
 
   if (!filters.includeSold) {
     query = query.eq("status", "disponivel");
+  }
+  if (!filters.includeOffline) {
+    query = query.is("imovelweb_offline_at", null);
   }
   if (filters.cityId) {
     query = query.eq("city_id", filters.cityId);
@@ -79,6 +93,10 @@ export async function getProperties(
 
   const { data, error } = await query;
   if (error) {
+    if (!filters.includeOffline && missingOfflineColumn(error)) {
+      return getProperties({ ...filters, includeOffline: true });
+    }
+
     const missingTransactionColumn =
       Boolean(filters.transactionType) &&
       (error.code === "42703" || error.code === "PGRST204");
@@ -104,12 +122,13 @@ export async function getPropertyBySlug(
 ): Promise<Property | null> {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("properties")
-    .select(PROPERTY_SELECT)
-    .eq("slug", slug)
-    .maybeSingle();
+  const run = (hideOffline: boolean) => {
+    const query = supabase.from("properties").select(PROPERTY_SELECT).eq("slug", slug);
+    return (hideOffline ? query.is("imovelweb_offline_at", null) : query).maybeSingle();
+  };
 
+  let { data, error } = await run(true);
+  if (missingOfflineColumn(error)) ({ data, error } = await run(false));
   if (error) throw error;
   if (!data) return null;
   return sortPhotos(data as Property);
