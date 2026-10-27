@@ -1,9 +1,5 @@
 export type PropertyType =
-  | "apartamento"
-  | "casa"
-  | "terreno"
-  | "comercial"
-  | "outro";
+  "apartamento" | "casa" | "terreno" | "comercial" | "outro";
 
 export type PropertyStatus = "disponivel" | "vendido";
 export type PropertyTransaction = "venda" | "aluguel";
@@ -47,6 +43,8 @@ export type Property = {
   parking_spots: number | null;
   features: string[];
   is_featured: boolean;
+  price?: number | null;
+  publish_imovelweb?: boolean;
   created_at: string;
   updated_at: string;
   city?: City;

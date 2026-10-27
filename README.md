@@ -8,10 +8,14 @@ Stack: Next.js 16 (App Router, TypeScript), Tailwind CSS v4, Supabase
 
 ## Estado atual
 
-Este projeto ainda **não está conectado a um Supabase real**. Sem as
-variáveis de ambiente configuradas, o site público funciona normalmente
-com o catálogo vazio, e o painel `/admin` mostra uma tela pedindo a
-configuração. Siga os passos abaixo para ativar tudo.
+A produção está conectada ao Supabase. Desenvolvimento usa a branch `dev`;
+a produção continua vinculada à `main`. Antes de testar cadastros, configure
+Supabase próprio para desenvolvimento: Preview e Development ainda estavam
+usando o projeto real na verificação de 2026-10-27.
+
+Sem variáveis configuradas, o site público funciona com catálogo vazio e
+o painel pede configuração. Nunca copie automaticamente as credenciais de
+produção para testes de escrita.
 
 ## 1. Criar o projeto Supabase
 
@@ -31,13 +35,13 @@ disponíveis para venda.
 
 Copie `.env.example` para `.env.local` e preencha:
 
-| Variável | Onde usar | Observação |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Local e Vercel | Project URL do Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Local e Vercel | Chave pública (anon), protegida por RLS |
-| `SUPABASE_SERVICE_ROLE_KEY` | Opcional, só scripts locais | **Nunca** commitar nem usar no client |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Local e Vercel | Só quando o número real for confirmado (ver seção 5) |
-| `NEXT_PUBLIC_SITE_URL` | Vercel | URL pública do deploy, para metadados |
+| Variável                        | Onde usar                   | Observação                                           |
+| ------------------------------- | --------------------------- | ---------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Local e Vercel              | Project URL do Supabase                              |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Local e Vercel              | Chave pública (anon), protegida por RLS              |
+| `SUPABASE_SERVICE_ROLE_KEY`     | Opcional, só scripts locais | **Nunca** commitar nem usar no client                |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER`   | Local e Vercel              | Só quando o número real for confirmado (ver seção 5) |
+| `NEXT_PUBLIC_SITE_URL`          | Vercel                      | URL pública do deploy, para metadados                |
 
 ## 3. Criar o primeiro administrador
 
@@ -65,6 +69,10 @@ npm install
 npm run dev
 ```
 
+Use Node 24 (`.nvmrc`). Os checks de qualidade são `npm run lint`, `npm test`,
+`npm run typecheck` e `npm run build`. Branches de trabalho partem de `dev`;
+publicação ocorre por PR para `main`, após revisão e aprovação do usuário.
+
 ## 5. Ativando o WhatsApp
 
 Enquanto `NEXT_PUBLIC_WHATSAPP_NUMBER` não estiver configurado, os botões
@@ -90,6 +98,17 @@ layout. Basta adicionar o vídeo (idealmente um imóvel em destaque, sem
    autorizado para produção, ajuste `app/robots.ts` e o `robots` em
    `app/layout.tsx` para permitir indexação.
 
+## 8. XML do Imovelweb
+
+O painel permite informar um preço específico para o portal e selecionar quais
+imóveis entram no XML. O feed fica desativado por padrão, exige uma chave e não
+altera o atendimento de leads nem os botões de WhatsApp.
+
+Consulte [configuração, migration, testes e ativação](docs/imovelweb-xml.md).
+A migration nova é preparada e testada em banco isolado; não é aplicada
+automaticamente em produção. A aceitação da carga ainda precisa ser homologada
+pelo portal.
+
 ## Estrutura
 
 - `app/(site)` — site público (home, catálogo, página do imóvel).
@@ -99,3 +118,6 @@ layout. Basta adicionar o vídeo (idealmente um imóvel em destaque, sem
 - `lib` — acesso a dados (Supabase), tipos e utilitários.
 - `supabase/schema.sql` — schema completo com RLS e bucket de fotos.
 - `supabase/seed.sql` — dados iniciais confirmados (cidade/bairro).
+- `lib/imovelweb` e `app/imovelweb/feed.xml` — validação, leitura e geração do XML.
+- `tests` — testes da carga, HTTP, paginação, ambiente e validação de formulário.
+- `docs/imovelweb-xml.md` — operação e limites da integração XML.

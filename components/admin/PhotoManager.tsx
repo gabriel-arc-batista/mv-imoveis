@@ -19,9 +19,11 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 export function PhotoManager({
   propertyId,
   photos,
+  databaseWritesAllowed,
 }: {
   propertyId: string;
   photos: PropertyPhoto[];
+  databaseWritesAllowed: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,6 +31,12 @@ export function PhotoManager({
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleFiles(files: FileList | null) {
+    if (!databaseWritesAllowed) {
+      setError(
+        "O envio de fotos está bloqueado até configurar um banco separado para este ambiente de testes.",
+      );
+      return;
+    }
     if (!files || files.length === 0) return;
     setError(null);
 
@@ -95,11 +103,20 @@ export function PhotoManager({
             accept="image/jpeg,image/png,image/webp"
             multiple
             hidden
-            disabled={uploading || photos.length >= MAX_PHOTOS}
+            disabled={
+              uploading || photos.length >= MAX_PHOTOS || !databaseWritesAllowed
+            }
             onChange={(e) => handleFiles(e.target.files)}
           />
         </label>
       </div>
+
+      {!databaseWritesAllowed && (
+        <p className="mt-2 text-sm text-admin-ink-soft">
+          O envio de fotos está bloqueado até configurar um banco separado para
+          este ambiente de testes.
+        </p>
+      )}
 
       {error && (
         <p className="mt-2 rounded-lg bg-admin-danger-soft px-3 py-2 text-sm text-admin-danger">
@@ -115,7 +132,13 @@ export function PhotoManager({
               className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface-alt"
             >
               <div className="relative aspect-[4/3]">
-                <Image src={photo.url} alt="" fill sizes="200px" className="object-cover" />
+                <Image
+                  src={photo.url}
+                  alt=""
+                  fill
+                  sizes="200px"
+                  className="object-cover"
+                />
                 {photo.is_cover && (
                   <span className="absolute left-2 top-2 rounded-full bg-admin-accent px-2 py-0.5 text-[10px] font-semibold text-white">
                     Capa
@@ -128,7 +151,9 @@ export function PhotoManager({
                     label="Mover para cima"
                     disabled={i === 0 || pending}
                     onClick={() =>
-                      startTransition(() => reorderPhoto(propertyId, photo.id, "up"))
+                      startTransition(() =>
+                        reorderPhoto(propertyId, photo.id, "up"),
+                      )
                     }
                   >
                     ↑
@@ -137,7 +162,9 @@ export function PhotoManager({
                     label="Mover para baixo"
                     disabled={i === photos.length - 1 || pending}
                     onClick={() =>
-                      startTransition(() => reorderPhoto(propertyId, photo.id, "down"))
+                      startTransition(() =>
+                        reorderPhoto(propertyId, photo.id, "down"),
+                      )
                     }
                   >
                     ↓
@@ -149,7 +176,9 @@ export function PhotoManager({
                       label="Definir como capa"
                       disabled={pending}
                       onClick={() =>
-                        startTransition(() => setCoverPhoto(propertyId, photo.id))
+                        startTransition(() =>
+                          setCoverPhoto(propertyId, photo.id),
+                        )
                       }
                     >
                       ★
@@ -161,7 +190,7 @@ export function PhotoManager({
                     onClick={() => {
                       if (window.confirm("Remover esta foto?")) {
                         startTransition(() =>
-                          deletePhoto(propertyId, photo.id, photo.storage_path)
+                          deletePhoto(propertyId, photo.id, photo.storage_path),
                         );
                       }
                     }}

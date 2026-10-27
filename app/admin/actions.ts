@@ -6,15 +6,31 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/supabase/admin";
 import { makeUniqueSlug } from "@/lib/slug";
+import { parsePropertyForm } from "@/lib/property-input";
+import { assertSafeDatabaseEnvironment } from "@/lib/supabase/environment-guard";
 
 export type ActionState = { error?: string; success?: boolean } | null;
 
+async function requireWritableAdmin() {
+  assertSafeDatabaseEnvironment();
+  return requireAdmin();
+}
+
 export async function signIn(
   _prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
     return { error: "O Supabase ainda não foi configurado neste projeto." };
+  }
+
+  try {
+    assertSafeDatabaseEnvironment();
+  } catch {
+    return {
+      error:
+        "Este ambiente de testes ainda precisa de um banco separado da produção.",
+    };
   }
 
   const email = String(formData.get("email") ?? "").trim();
@@ -54,53 +70,27 @@ export async function signOut() {
   redirect("/admin/login");
 }
 
-const propertySchema = z.object({
-  title: z.string().trim().min(3, "Informe um título com pelo menos 3 caracteres."),
-  code: z.string().trim().min(1, "Informe o código do imóvel."),
-  description: z.string().trim().default(""),
-  type: z.enum(["apartamento", "casa", "terreno", "comercial", "outro"]),
-  status: z.enum(["disponivel", "vendido"]),
-  transaction_type: z.enum(["venda", "aluguel"]),
-  city_id: z.string().uuid("Selecione uma cidade."),
-  neighborhood_id: z.string().uuid("Selecione um bairro."),
-  address: z.string().trim().optional(),
-  zip_code: z.string().trim().optional(),
-  area_m2: z.coerce.number().positive().optional(),
-  bedrooms: z.coerce.number().int().min(0).optional(),
-  bathrooms: z.coerce.number().int().min(0).optional(),
-  parking_spots: z.coerce.number().int().min(0).optional(),
-  features: z.string().trim().default(""),
-  is_featured: z.coerce.boolean().default(false),
-});
-
-function parsePropertyForm(formData: FormData) {
-  const raw = Object.fromEntries(formData.entries());
-  return propertySchema.safeParse({
-    ...raw,
-    is_featured: formData.get("is_featured") === "on",
-    area_m2: raw.area_m2 || undefined,
-    bedrooms: raw.bedrooms || undefined,
-    bathrooms: raw.bathrooms || undefined,
-    parking_spots: raw.parking_spots || undefined,
-    address: raw.address || undefined,
-    zip_code: raw.zip_code || undefined,
-  });
+function isMissingTransactionColumn(
+  error: { code?: string; message?: string } | null,
+) {
+  return Boolean(
+    error?.message?.includes("transaction_type") &&
+    (error.code === "42703" || error.code === "PGRST204"),
+  );
 }
 
-function isMissingTransactionColumn(error: { code?: string; message?: string } | null) {
+function isMissingXmlColumn(error: { code?: string; message?: string } | null) {
   return Boolean(
-    error &&
-      (error.code === "42703" ||
-        error.code === "PGRST204" ||
-        error.message?.includes("transaction_type"))
+    (error?.code === "42703" || error?.code === "PGRST204") &&
+    /\b(price|publish_imovelweb)\b/.test(error.message ?? ""),
   );
 }
 
 export async function createProperty(
   _prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireWritableAdmin();
   const parsed = parsePropertyForm(formData);
 
   if (!parsed.success) {
@@ -135,11 +125,13 @@ export async function createProperty(
 
   if (error) {
     return {
-      error: isMissingTransactionColumn(error)
-        ? "Atualize o banco de dados antes de cadastrar um imóvel para aluguel."
-        : error.code === "23505"
-          ? "Já existe um imóvel com esse código."
-          : "Erro ao salvar o imóvel.",
+      error: isMissingXmlColumn(error)
+        ? "A configuração do Imovelweb no banco ainda precisa ser concluída."
+        : isMissingTransactionColumn(error)
+          ? "Atualize o banco de dados antes de cadastrar um imóvel para aluguel."
+          : error.code === "23505"
+            ? "Já existe um imóvel com esse código."
+            : "Erro ao salvar o imóvel.",
     };
   }
 
@@ -155,9 +147,9 @@ export async function createProperty(
 export async function updateProperty(
   propertyId: string,
   _prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireWritableAdmin();
   const parsed = parsePropertyForm(formData);
 
   if (!parsed.success) {
@@ -187,11 +179,13 @@ export async function updateProperty(
 
   if (error) {
     return {
-      error: isMissingTransactionColumn(error)
-        ? "Atualize o banco de dados antes de marcar um imóvel para aluguel."
-        : error.code === "23505"
-          ? "Já existe um imóvel com esse código."
-          : "Erro ao salvar o imóvel.",
+      error: isMissingXmlColumn(error)
+        ? "A configuração do Imovelweb no banco ainda precisa ser concluída."
+        : isMissingTransactionColumn(error)
+          ? "Atualize o banco de dados antes de marcar um imóvel para aluguel."
+          : error.code === "23505"
+            ? "Já existe um imóvel com esse código."
+            : "Erro ao salvar o imóvel.",
     };
   }
 
@@ -201,15 +195,18 @@ export async function updateProperty(
   return { success: true };
 }
 
-export async function setPropertyStatus(propertyId: string, status: "disponivel" | "vendido") {
-  const { supabase } = await requireAdmin();
+export async function setPropertyStatus(
+  propertyId: string,
+  status: "disponivel" | "vendido",
+) {
+  const { supabase } = await requireWritableAdmin();
   await supabase.from("properties").update({ status }).eq("id", propertyId);
   revalidatePath("/admin/imoveis");
   revalidatePath("/imoveis");
 }
 
 export async function deleteProperty(propertyId: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireWritableAdmin();
   await supabase.from("properties").delete().eq("id", propertyId);
   revalidatePath("/admin/imoveis");
   revalidatePath("/imoveis");
@@ -217,9 +214,9 @@ export async function deleteProperty(propertyId: string) {
 
 export async function addPhotos(
   propertyId: string,
-  photos: { url: string; storage_path: string }[]
+  photos: { url: string; storage_path: string }[],
 ) {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireWritableAdmin();
 
   const { count } = await supabase
     .from("property_photos")
@@ -243,8 +240,12 @@ export async function addPhotos(
   revalidatePath("/imoveis");
 }
 
-export async function deletePhoto(propertyId: string, photoId: string, storagePath: string) {
-  const { supabase } = await requireAdmin();
+export async function deletePhoto(
+  propertyId: string,
+  photoId: string,
+  storagePath: string,
+) {
+  const { supabase } = await requireWritableAdmin();
   await supabase.storage.from("property-photos").remove([storagePath]);
   await supabase.from("property_photos").delete().eq("id", photoId);
   revalidatePath(`/admin/imoveis/${propertyId}`);
@@ -252,18 +253,25 @@ export async function deletePhoto(propertyId: string, photoId: string, storagePa
 }
 
 export async function setCoverPhoto(propertyId: string, photoId: string) {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireWritableAdmin();
   await supabase
     .from("property_photos")
     .update({ is_cover: false })
     .eq("property_id", propertyId);
-  await supabase.from("property_photos").update({ is_cover: true }).eq("id", photoId);
+  await supabase
+    .from("property_photos")
+    .update({ is_cover: true })
+    .eq("id", photoId);
   revalidatePath(`/admin/imoveis/${propertyId}`);
   revalidatePath("/imoveis");
 }
 
-export async function reorderPhoto(propertyId: string, photoId: string, direction: "up" | "down") {
-  const { supabase } = await requireAdmin();
+export async function reorderPhoto(
+  propertyId: string,
+  photoId: string,
+  direction: "up" | "down",
+) {
+  const { supabase } = await requireWritableAdmin();
   const { data: photos } = await supabase
     .from("property_photos")
     .select("id, position")
@@ -279,13 +287,21 @@ export async function reorderPhoto(propertyId: string, photoId: string, directio
   const a = photos[index];
   const b = photos[swapWith];
 
-  await supabase.from("property_photos").update({ position: b.position }).eq("id", a.id);
-  await supabase.from("property_photos").update({ position: a.position }).eq("id", b.id);
+  await supabase
+    .from("property_photos")
+    .update({ position: b.position })
+    .eq("id", a.id);
+  await supabase
+    .from("property_photos")
+    .update({ position: a.position })
+    .eq("id", b.id);
 
   revalidatePath(`/admin/imoveis/${propertyId}`);
 }
 
-const citySchema = z.object({ name: z.string().trim().min(2, "Informe o nome da cidade.") });
+const citySchema = z.object({
+  name: z.string().trim().min(2, "Informe o nome da cidade."),
+});
 const neighborhoodSchema = z.object({
   city_id: z.string().uuid("Selecione uma cidade."),
   name: z.string().trim().min(2, "Informe o nome do bairro."),
@@ -293,15 +309,18 @@ const neighborhoodSchema = z.object({
 
 export async function createCity(
   _prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireAdmin();
+  const { supabase } = await requireWritableAdmin();
   const parsed = citySchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const { error } = await supabase.from("cities").insert(parsed.data);
   if (error) {
-    return { error: error.code === "23505" ? "Essa cidade já existe." : "Erro ao salvar." };
+    return {
+      error:
+        error.code === "23505" ? "Essa cidade já existe." : "Erro ao salvar.",
+    };
   }
 
   revalidatePath("/admin/cidades");
@@ -310,15 +329,22 @@ export async function createCity(
 
 export async function createNeighborhood(
   _prevState: ActionState,
-  formData: FormData
+  formData: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireAdmin();
-  const parsed = neighborhoodSchema.safeParse(Object.fromEntries(formData.entries()));
+  const { supabase } = await requireWritableAdmin();
+  const parsed = neighborhoodSchema.safeParse(
+    Object.fromEntries(formData.entries()),
+  );
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const { error } = await supabase.from("neighborhoods").insert(parsed.data);
   if (error) {
-    return { error: error.code === "23505" ? "Esse bairro já existe nessa cidade." : "Erro ao salvar." };
+    return {
+      error:
+        error.code === "23505"
+          ? "Esse bairro já existe nessa cidade."
+          : "Erro ao salvar.",
+    };
   }
 
   revalidatePath("/admin/cidades");

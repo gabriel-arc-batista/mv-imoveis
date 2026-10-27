@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, type ChangeEvent } from "react";
 import type {
   City,
   Neighborhood,
@@ -8,12 +8,13 @@ import type {
   PropertyTransaction,
   PropertyType,
 } from "@/lib/types";
-import {
-  PROPERTY_TRANSACTION_LABEL,
-  PROPERTY_TYPE_LABEL,
-} from "@/lib/types";
+import { PROPERTY_TRANSACTION_LABEL, PROPERTY_TYPE_LABEL } from "@/lib/types";
 import type { ActionState } from "@/app/admin/actions";
-import { button, input as inputClass, label as labelClass } from "@/components/admin/ui";
+import {
+  button,
+  input as inputClass,
+  label as labelClass,
+} from "@/components/admin/ui";
 
 export function PropertyForm({
   action,
@@ -30,23 +31,63 @@ export function PropertyForm({
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     action,
-    null
+    null,
   );
   const [cityId, setCityId] = useState(property?.city_id ?? "");
+  const [featured, setFeatured] = useState(property?.is_featured ?? false);
+  const [exporting, setExporting] = useState(
+    property?.publish_imovelweb ?? false,
+  );
+  const [values, setValues] = useState({
+    title: property?.title ?? "",
+    code: property?.code ?? "",
+    type: property?.type ?? "apartamento",
+    status: property?.status ?? "disponivel",
+    transaction_type: property?.transaction_type ?? "venda",
+    neighborhood_id: property?.neighborhood_id ?? "",
+    address: property?.address ?? "",
+    zip_code: property?.zip_code ?? "",
+    area_m2: String(property?.area_m2 ?? ""),
+    bedrooms: String(property?.bedrooms ?? ""),
+    bathrooms: String(property?.bathrooms ?? ""),
+    parking_spots: String(property?.parking_spots ?? ""),
+    description: property?.description ?? "",
+    features: property?.features?.join(", ") ?? "",
+    price: String(property?.price ?? ""),
+  });
+  function field(name: keyof typeof values) {
+    return {
+      value: values[name],
+      onChange: (
+        event: ChangeEvent<
+          HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >,
+      ) => {
+        const value = event.target.value;
+        setValues((current) => ({ ...current, [name]: value }));
+      },
+    };
+  }
 
   const filteredNeighborhoods = cityId
     ? neighborhoods.filter((n) => n.city_id === cityId)
     : [];
 
   return (
-    <form action={formAction} className="flex flex-col gap-6">
+    <form
+      action={formAction}
+      // Actions também disparam reset ao devolver erros de validação.
+      // Impedir o reset nativo mantém selects e checkboxes alinhados ao estado.
+      onReset={(event) => event.preventDefault()}
+      className="flex flex-col gap-6"
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Título" htmlFor="title">
           <input
             id="title"
             name="title"
             required
-            defaultValue={property?.title}
+            {...field("title")}
             className={inputClass}
           />
         </Field>
@@ -56,7 +97,7 @@ export function PropertyForm({
             id="code"
             name="code"
             required
-            defaultValue={property?.code}
+            {...field("code")}
             className={inputClass}
           />
         </Field>
@@ -66,7 +107,7 @@ export function PropertyForm({
             id="type"
             name="type"
             required
-            defaultValue={property?.type ?? "apartamento"}
+            {...field("type")}
             className={inputClass}
           >
             {Object.entries(PROPERTY_TYPE_LABEL).map(([value, label]) => (
@@ -82,7 +123,7 @@ export function PropertyForm({
             id="status"
             name="status"
             required
-            defaultValue={property?.status ?? "disponivel"}
+            {...field("status")}
             className={inputClass}
           >
             <option value="disponivel">Disponível</option>
@@ -95,14 +136,16 @@ export function PropertyForm({
             id="transaction_type"
             name="transaction_type"
             required
-            defaultValue={property?.transaction_type ?? "venda"}
+            {...field("transaction_type")}
             className={inputClass}
           >
-            {Object.entries(PROPERTY_TRANSACTION_LABEL).map(([value, label]) => (
-              <option key={value} value={value as PropertyTransaction}>
-                {label}
-              </option>
-            ))}
+            {Object.entries(PROPERTY_TRANSACTION_LABEL).map(
+              ([value, label]) => (
+                <option key={value} value={value as PropertyTransaction}>
+                  {label}
+                </option>
+              ),
+            )}
           </select>
         </Field>
 
@@ -112,7 +155,10 @@ export function PropertyForm({
             name="city_id"
             required
             value={cityId}
-            onChange={(e) => setCityId(e.target.value)}
+            onChange={(e) => {
+              setCityId(e.target.value);
+              setValues((current) => ({ ...current, neighborhood_id: "" }));
+            }}
             className={inputClass}
           >
             <option value="" disabled>
@@ -131,7 +177,7 @@ export function PropertyForm({
             id="neighborhood_id"
             name="neighborhood_id"
             required
-            defaultValue={property?.neighborhood_id}
+            {...field("neighborhood_id")}
             disabled={!cityId}
             className={inputClass}
           >
@@ -147,11 +193,21 @@ export function PropertyForm({
         </Field>
 
         <Field label="Endereço (opcional)" htmlFor="address">
-          <input id="address" name="address" defaultValue={property?.address ?? ""} className={inputClass} />
+          <input
+            id="address"
+            name="address"
+            {...field("address")}
+            className={inputClass}
+          />
         </Field>
 
         <Field label="CEP (opcional)" htmlFor="zip_code">
-          <input id="zip_code" name="zip_code" defaultValue={property?.zip_code ?? ""} className={inputClass} />
+          <input
+            id="zip_code"
+            name="zip_code"
+            {...field("zip_code")}
+            className={inputClass}
+          />
         </Field>
 
         <Field label="Área (m²)" htmlFor="area_m2">
@@ -161,7 +217,7 @@ export function PropertyForm({
             type="number"
             step="0.01"
             min="0"
-            defaultValue={property?.area_m2 ?? ""}
+            {...field("area_m2")}
             className={inputClass}
           />
         </Field>
@@ -172,7 +228,7 @@ export function PropertyForm({
             name="bedrooms"
             type="number"
             min="0"
-            defaultValue={property?.bedrooms ?? ""}
+            {...field("bedrooms")}
             className={inputClass}
           />
         </Field>
@@ -183,7 +239,7 @@ export function PropertyForm({
             name="bathrooms"
             type="number"
             min="0"
-            defaultValue={property?.bathrooms ?? ""}
+            {...field("bathrooms")}
             className={inputClass}
           />
         </Field>
@@ -194,7 +250,7 @@ export function PropertyForm({
             name="parking_spots"
             type="number"
             min="0"
-            defaultValue={property?.parking_spots ?? ""}
+            {...field("parking_spots")}
             className={inputClass}
           />
         </Field>
@@ -205,7 +261,7 @@ export function PropertyForm({
           id="description"
           name="description"
           rows={5}
-          defaultValue={property?.description}
+          {...field("description")}
           className={inputClass}
         />
       </Field>
@@ -218,7 +274,7 @@ export function PropertyForm({
           id="features"
           name="features"
           placeholder="Piscina, Varanda gourmet, Portaria 24h"
-          defaultValue={property?.features?.join(", ") ?? ""}
+          {...field("features")}
           className={inputClass}
         />
       </Field>
@@ -227,11 +283,55 @@ export function PropertyForm({
         <input
           type="checkbox"
           name="is_featured"
-          defaultChecked={property?.is_featured}
+          checked={featured}
+          onChange={(event) => setFeatured(event.target.checked)}
           className="focus-ring h-4 w-4 accent-(--color-admin-accent)"
         />
         Exibir em destaque na página inicial
       </label>
+
+      <fieldset className="rounded-xl border border-admin-border p-5">
+        <legend className="px-2 text-sm font-semibold text-admin-ink">
+          Publicação no Imovelweb
+        </legend>
+        <p className="mb-4 text-sm text-admin-ink-soft">
+          O XML envia os imóveis selecionados ao portal. O atendimento dos
+          interessados continua como está.
+        </p>
+        <Field label="Preço para o Imovelweb (R$)" htmlFor="price">
+          <input
+            id="price"
+            name="price"
+            type="number"
+            min="1"
+            step="1"
+            max="999999999999"
+            required={exporting}
+            {...field("price")}
+            className={inputClass}
+            aria-describedby="price-help"
+          />
+        </Field>
+        <p id="price-help" className="mt-2 text-xs text-admin-ink-soft">
+          Use reais inteiros, sem centavos. Este preço não é exibido na vitrine
+          do site.
+        </p>
+        <label className="mt-4 flex items-center gap-2 text-sm text-admin-ink">
+          <input
+            type="checkbox"
+            name="publish_imovelweb"
+            checked={exporting}
+            onChange={(event) => setExporting(event.target.checked)}
+            className="focus-ring h-4 w-4 accent-(--color-admin-accent)"
+          />
+          Incluir este imóvel no XML do Imovelweb
+        </label>
+        <p className="mt-2 text-xs text-admin-ink-soft">
+          Para entrar na carga: imóvel disponível, título de 10 a 80 caracteres,
+          descrição de pelo menos 50 caracteres, endereço, CEP, área e pelo
+          menos 5 fotos. Salve o imóvel para adicionar as fotos.
+        </p>
+      </fieldset>
 
       {state?.error && (
         <p
@@ -250,7 +350,11 @@ export function PropertyForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending} className={`${button.primary} self-start`}>
+      <button
+        type="submit"
+        disabled={pending}
+        className={`${button.primary} self-start`}
+      >
         {pending ? "Salvando…" : submitLabel}
       </button>
     </form>
