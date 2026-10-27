@@ -37,9 +37,11 @@ try {
     "postgres:17.6",
   );
   let ready = false;
-  for (let attempt = 0; attempt < 40; attempt++) {
+  for (let attempt = 0; attempt < 120; attempt++) {
     try {
-      docker("exec", name, "pg_isready", "-U", "postgres");
+      // A inicialização da imagem usa um servidor temporário somente via socket.
+      // TCP só fica disponível no servidor definitivo, após concluir o initdb.
+      docker("exec", name, "pg_isready", "-h", "127.0.0.1", "-U", "postgres");
       ready = true;
       break;
     } catch {
