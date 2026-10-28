@@ -7,7 +7,10 @@ export function assertSafeDatabaseEnvironment(env: Environment = process.env) {
   if (env.VERCEL_ENV === "production") return;
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   if (!url) return;
-  if (new URL(url).hostname.toLowerCase() === PRODUCTION_DATABASE_HOST) {
+  if (
+    new URL(url).hostname.toLowerCase().replace(/\.$/, "") ===
+    PRODUCTION_DATABASE_HOST
+  ) {
     throw new Error(
       "Este ambiente de desenvolvimento usa o banco de produção. Configure um Supabase isolado para continuar.",
     );

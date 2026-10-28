@@ -56,10 +56,10 @@ try {
   sql(
     "upgrade_test",
     `
-    create table public.properties(id uuid primary key default gen_random_uuid(), title text not null);
+    create table public.properties(id uuid primary key default gen_random_uuid(), title text not null, area_m2 numeric);
     alter table public.properties enable row level security;
     create policy public_read on public.properties for select using(true);
-    insert into public.properties(id,title) values('e5cfef7e-ae76-4a4e-a94e-60990daf05d4','Imóvel existente');
+    insert into public.properties(id,title,area_m2) values('e5cfef7e-ae76-4a4e-a94e-60990daf05d4','Imóvel existente',85.6);
   `,
   );
   sql(
@@ -76,9 +76,19 @@ try {
     "upgrade_test",
     `
     do $$ begin
-      if not exists(select 1 from public.properties where id='e5cfef7e-ae76-4a4e-a94e-60990daf05d4' and title='Imóvel existente' and price is null and publish_imovelweb=false) then raise exception 'Dados existentes alterados'; end if;
+      if not exists(select 1 from public.properties where id='e5cfef7e-ae76-4a4e-a94e-60990daf05d4' and title='Imóvel existente' and area_m2=85.6 and covered_area_m2 is null and price is null and publish_imovelweb=false) then raise exception 'Dados existentes alterados'; end if;
       if not exists(select 1 from pg_policies where tablename='properties' and policyname='public_read') then raise exception 'Política perdida'; end if;
       if not (select relrowsecurity from pg_class where oid='public.properties'::regclass) then raise exception 'RLS desativado'; end if;
+    end $$;
+    insert into public.properties(title,area_m2,covered_area_m2) values('Áreas distintas',85.6,70.25),('Medidas independentes',85.6,150);
+    do $$ declare invalid numeric; begin
+      if not exists(select 1 from public.properties where title='Áreas distintas' and area_m2=85.6 and covered_area_m2=70.25) then raise exception 'Áreas foram alteradas'; end if;
+      foreach invalid in array array[0,-1,'NaN'::numeric,'Infinity'::numeric] loop
+        begin
+          insert into public.properties(title,area_m2,covered_area_m2) values('Área inválida',85.6,invalid);
+          raise exception 'Área inválida aceita: %',invalid;
+        exception when check_violation then null; end;
+      end loop;
     end $$;
     insert into public.properties(title,price,publish_imovelweb) values('Selecionado',3500,true);
     do $$ declare invalid numeric; begin
@@ -110,7 +120,7 @@ try {
     readFileSync(new URL("../supabase/schema.sql", import.meta.url), "utf8"),
   );
   console.log(
-    "Migration aprovada em PostgreSQL 17: preservação dos dados/RLS, restrições de preço e schema novo.",
+    "Migration aprovada em PostgreSQL 17: preservação dos dados/RLS, restrições de preço/área e schema novo.",
   );
 } finally {
   try {

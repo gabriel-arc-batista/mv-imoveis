@@ -13,6 +13,14 @@ test("preview/local cannot use the known production database", () => {
       /desenvolvimento|produção|isolado/i,
     );
 });
+test("equivalent production hostnames with a final DNS dot remain blocked", () => {
+  assert.throws(() =>
+    assertSafeDatabaseEnvironment({
+      VERCEL_ENV: "preview",
+      NEXT_PUBLIC_SUPABASE_URL: "https://AYNQLHFZYSSCQNZKVBUG.supabase.co./",
+    }),
+  );
+});
 test("production and isolated development databases are allowed", () => {
   assert.doesNotThrow(() =>
     assertSafeDatabaseEnvironment({

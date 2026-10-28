@@ -1,40 +1,35 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/supabase/admin";
-import { getProperties } from "@/lib/queries";
+import { getFeedProperties } from "@/lib/imovelweb/properties";
+import { getFeedSetup, getFeedUrl } from "@/lib/imovelweb/config";
+import { FeedError } from "@/lib/imovelweb/errors";
+import type { Property } from "@/lib/types";
 import { getImovelwebIssues } from "@/lib/imovelweb/feed";
 import { ImovelwebStatus } from "@/components/admin/ImovelwebStatus";
 import { card, button } from "@/components/admin/ui";
 
 export default async function ImovelwebPage() {
   // O endereço contém uma chave; autorizar aqui também, antes de renderizar os dados da página.
-  const { supabase } = await requireAdmin();
-  const { error } = await supabase
-    .from("properties")
-    .select("price,publish_imovelweb")
-    .limit(1);
-  const properties = error ? [] : await getProperties({ includeSold: true });
-  const selected = properties.filter(
-    (p) => p.publish_imovelweb && p.status === "disponivel",
-  );
-  const pending = selected.filter((p) => getImovelwebIssues(p).length);
-  const token = process.env.IMOVELWEB_FEED_TOKEN?.trim() ?? "";
-  const configured =
-    process.env.IMOVELWEB_XML_ENABLED === "true" &&
-    token.length >= 32 &&
-    Boolean(process.env.IMOVELWEB_CODIGO_IMOBILIARIA?.trim());
-  const previewHost = process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL;
-  const origin =
-    process.env.VERCEL_ENV === "preview" && previewHost
-      ? `https://${previewHost}`
-      : process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  let url: string | null = null;
+  await requireAdmin();
+  let properties: Property[] = [];
+  let catalogError: string | null = null;
   try {
-    const value = new URL("/imovelweb/feed.xml", origin);
-    value.searchParams.set("token", token);
-    url = value.href;
-  } catch {
-    /* Configuração do domínio ainda pendente. */
+    properties = await getFeedProperties({ includeSold: true });
+  } catch (error) {
+    catalogError =
+      error instanceof FeedError && error.reason === "schema_missing"
+        ? "A configuração do Imovelweb no banco ainda precisa ser concluída pelo responsável pelo site."
+        : "Não foi possível conferir o catálogo completo. Tente novamente antes de configurar o portal.";
+    console.error("imovelweb_admin_catalog_unavailable", {
+      reason: error instanceof FeedError ? error.reason : "unexpected",
+    });
   }
+  const selected = properties.filter((p) => p.status === "disponivel");
+  const pending = selected.filter((p) => getImovelwebIssues(p).length);
+  const setup = getFeedSetup(process.env);
+  const url = getFeedUrl(process.env);
+  const catalogReady =
+    !catalogError && selected.length > 0 && pending.length === 0;
   return (
     <div>
       <h1 className="text-2xl font-semibold text-admin-ink">Imovelweb</h1>
@@ -45,30 +40,53 @@ export default async function ImovelwebPage() {
       <section className={`mt-8 max-w-3xl p-6 ${card}`}>
         <h2 className="font-semibold">Situação do XML</h2>
         <p className="mt-3 text-sm text-admin-ink-soft">
-          {configured
-            ? "Feed habilitado."
-            : "Feed desativado. A configuração ainda precisa ser concluída."}
+          {!setup.enabled
+            ? "XML desativado."
+            : setup.ready && catalogReady && url
+              ? "XML preparado para consulta. A ativação no portal deve ser confirmada separadamente."
+              : "XML indisponível. Confira as pendências abaixo."}
         </p>
-        {error && (
+        {setup.blocked && (
           <p className="mt-3 text-sm text-admin-danger">
-            A configuração do Imovelweb no banco ainda precisa ser concluída
-            pelo responsável pelo site.
+            Este ambiente de testes ainda usa o banco de produção. A integração
+            está bloqueada até configurar um Supabase separado.
           </p>
         )}
-        <p className="mt-3 text-sm">
-          {selected.length} selecionados e disponíveis · {pending.length} com
-          pendências
-        </p>
-        {(!selected.length || pending.length > 0) && (
+        {setup.issues.length > 0 && (
+          <ul className="mt-3 list-disc space-y-1 pl-4 text-sm text-admin-ink-soft">
+            {setup.issues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        )}
+        {setup.ready && !url && (
+          <p className="mt-3 text-sm text-admin-danger">
+            O endereço público deste ambiente precisa ser configurado
+            corretamente pelo responsável pelo site antes de compartilhar a URL.
+          </p>
+        )}
+        {catalogError ? (
+          <p className="mt-3 text-sm text-admin-danger" role="alert">
+            {catalogError}
+          </p>
+        ) : (
+          <p className="mt-3 text-sm">
+            {selected.length} selecionados e disponíveis · {pending.length} com
+            pendências
+          </p>
+        )}
+        {!catalogError && (!selected.length || pending.length > 0) && (
           <p className="mt-3 text-sm text-admin-ink-soft">
             A carga fica indisponível enquanto estiver vazia ou houver imóveis
             selecionados com pendências. Isso evita enviar uma lista incompleta.
           </p>
         )}
-        {configured && url && (
+        {setup.ready && catalogReady && url && (
           <div className="mt-5">
             <label htmlFor="feed-url" className="text-sm font-medium">
-              URL para cadastrar no Imovelweb
+              {process.env.VERCEL_ENV === "production"
+                ? "URL para cadastrar no Imovelweb"
+                : "URL de testes do XML"}
             </label>
             <input
               id="feed-url"
@@ -80,12 +98,18 @@ export default async function ImovelwebPage() {
               Este endereço contém a chave da integração. Compartilhe apenas com
               o portal.
             </p>
+            {process.env.VERCEL_ENV !== "production" && (
+              <p className="mt-2 text-xs text-admin-ink-soft">
+                Este é um ambiente de testes. Não cadastre esta URL como fonte
+                dos anúncios de produção.
+              </p>
+            )}
           </div>
         )}
         <p className="mt-4 text-sm text-admin-ink-soft">
           Antes de ativar no portal, confirme com o atendimento como ficam os
-          anúncios já cadastrados manualmente. O XML não altera o destino dos
-          contatos.
+          anúncios já cadastrados manualmente. O recebimento de leads é
+          configurado separadamente no portal.
         </p>
       </section>
       <section className={`mt-6 max-w-3xl p-6 ${card}`}>
@@ -106,7 +130,7 @@ export default async function ImovelwebPage() {
               <ImovelwebStatus property={property} />
             </div>
           ))}
-        {!properties.some((p) => p.publish_imovelweb) && (
+        {!catalogError && properties.length === 0 && (
           <p className="mt-3 text-sm text-admin-ink-soft">
             Nenhum imóvel selecionado. Abra um cadastro para informar o preço e
             escolher sua inclusão.

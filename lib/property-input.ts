@@ -16,6 +16,10 @@ const propertySchema = z
     address: z.string().trim().optional(),
     zip_code: z.string().trim().optional(),
     area_m2: z.coerce.number().positive().optional(),
+    covered_area_m2: z.coerce
+      .number()
+      .positive("Informe uma área construída maior que zero.")
+      .nullable(),
     bedrooms: z.coerce.number().int().min(0).optional(),
     bathrooms: z.coerce.number().int().min(0).optional(),
     parking_spots: z.coerce.number().int().min(0).optional(),
@@ -46,6 +50,7 @@ export function parsePropertyForm(formData: FormData) {
     publish_imovelweb: formData.get("publish_imovelweb") === "on",
     price: raw.price || null,
     area_m2: raw.area_m2 || undefined,
+    covered_area_m2: raw.covered_area_m2 || null,
     bedrooms: raw.bedrooms || undefined,
     bathrooms: raw.bathrooms || undefined,
     parking_spots: raw.parking_spots || undefined,

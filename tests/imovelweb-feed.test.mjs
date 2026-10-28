@@ -64,6 +64,13 @@ test("preserves decimal areas, zero parking and puts the cover first", () => {
       features.find((f) => child(f, "id").text === "CFT101"),
       "valor",
     ).text,
+    "70.25",
+  );
+  assert.equal(
+    child(
+      features.find((f) => child(f, "id").text === "CFT100"),
+      "valor",
+    ).text,
     "85.6",
   );
   assert.equal(
@@ -131,6 +138,9 @@ test("BR requirements: five photos, description length, postal code and supporte
     { type: "outro" },
     { address: "" },
     { area_m2: 0 },
+    { covered_area_m2: null },
+    { covered_area_m2: -1 },
+    { covered_area_m2: Infinity },
     { title: "a".repeat(81) },
     { neighborhood: { id: "x", city_id: "other", name: "Bairro" } },
   ]) {
@@ -140,6 +150,25 @@ test("BR requirements: five photos, description length, postal code and supporte
     );
   }
   assert.deepEqual(getImovelwebIssues(property()), []);
+});
+
+test("land exports only the confirmed total area, without inferring a covered area", () => {
+  const root = parse(
+    buildImovelwebFeed(
+      [property({ type: "terreno", covered_area_m2: null })],
+      feedConfig,
+    ),
+  );
+  const xmlFeatures = child(
+    child(child(root, "Imoveis"), "Imovel"),
+    "caracteristicas",
+  );
+  assert.equal(
+    children(xmlFeatures, "caracteristica").some(
+      (f) => child(f, "id").text === "CFT101",
+    ),
+    false,
+  );
 });
 
 test("rejects fractional/invalid prices without rounding or changing the submitted value", () => {
@@ -157,8 +186,44 @@ test("photo URLs must be usable, unique, public HTTPS URLs", () => {
     "https://localhost/test.jpg",
     "https://127.0.0.1/test.jpg",
     "https://user:password@example.com/a.jpg",
+    "https://photos.localhost./a.jpg",
+    "https://photos.internal./a.jpg",
+    "https://example.com/a.jpg#fragment",
+    "https://example.com/a\n.jpg",
   ]) {
     const photos = property().photos.map((p) => ({ ...p, url }));
     assert.ok(getImovelwebIssues(property({ photos })).length);
   }
+});
+
+test("validates the text actually serialized and measures Unicode as XSD characters", () => {
+  const title = "😀".repeat(80);
+  assert.deepEqual(getImovelwebIssues(property({ title })), []);
+  assert.ok(getImovelwebIssues(property({ title: title + "a" })).length);
+  for (const patch of [
+    { address: "\u0000" },
+    { code: "\u0000" },
+    { id: "\u0000" },
+    { city: { id: "city-1", name: ",,\u0000" } },
+    {
+      neighborhood: { id: "neighborhood-1", city_id: "city-1", name: "\u0000" },
+    },
+  ])
+    assert.throws(() => buildImovelwebFeed([property(patch)], feedConfig));
+});
+
+test("equivalent photo URLs cannot masquerade as distinct images", () => {
+  const photos = property().photos;
+  photos[0].url = "https://EXAMPLE.com:443/a.jpg";
+  photos[1].url = "https://example.com/a.jpg";
+  assert.ok(getImovelwebIssues(property({ photos })).length);
+});
+
+test("direct callers cannot bypass publisher XML restrictions", () => {
+  for (const config of [
+    { ...feedConfig, codigoImobiliaria: "\u0000" },
+    { ...feedConfig, contato: { nome: "a".repeat(256) } },
+    { ...feedConfig, contato: { telefone: "\u0000" } },
+  ])
+    assert.throws(() => buildImovelwebFeed([property()], config));
 });

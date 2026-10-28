@@ -48,6 +48,7 @@ export function PropertyForm({
     address: property?.address ?? "",
     zip_code: property?.zip_code ?? "",
     area_m2: String(property?.area_m2 ?? ""),
+    covered_area_m2: String(property?.covered_area_m2 ?? ""),
     bedrooms: String(property?.bedrooms ?? ""),
     bathrooms: String(property?.bathrooms ?? ""),
     parking_spots: String(property?.parking_spots ?? ""),
@@ -210,7 +211,7 @@ export function PropertyForm({
           />
         </Field>
 
-        <Field label="Área (m²)" htmlFor="area_m2">
+        <Field label="Área total (m²)" htmlFor="area_m2">
           <input
             id="area_m2"
             name="area_m2"
@@ -220,6 +221,26 @@ export function PropertyForm({
             {...field("area_m2")}
             className={inputClass}
           />
+        </Field>
+
+        <Field label="Área construída/coberta (m²)" htmlFor="covered_area_m2">
+          <input
+            id="covered_area_m2"
+            name="covered_area_m2"
+            type="number"
+            step="0.01"
+            min="0.01"
+            {...field("covered_area_m2")}
+            className={inputClass}
+            aria-describedby="covered-area-help"
+          />
+          <p
+            id="covered-area-help"
+            className="mt-2 text-xs text-admin-ink-soft"
+          >
+            Informe a medida confirmada na documentação do imóvel. Para
+            terrenos, o XML utiliza apenas a área total.
+          </p>
         </Field>
 
         <Field label="Quartos" htmlFor="bedrooms">
@@ -328,8 +349,9 @@ export function PropertyForm({
         </label>
         <p className="mt-2 text-xs text-admin-ink-soft">
           Para entrar na carga: imóvel disponível, título de 10 a 80 caracteres,
-          descrição de pelo menos 50 caracteres, endereço, CEP, área e pelo
-          menos 5 fotos. Salve o imóvel para adicionar as fotos.
+          descrição de pelo menos 50 caracteres, endereço, CEP, áreas
+          confirmadas e pelo menos 5 fotos. Salve o imóvel para adicionar as
+          fotos.
         </p>
       </fieldset>
 

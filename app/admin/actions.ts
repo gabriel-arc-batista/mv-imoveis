@@ -82,7 +82,7 @@ function isMissingTransactionColumn(
 function isMissingXmlColumn(error: { code?: string; message?: string } | null) {
   return Boolean(
     (error?.code === "42703" || error?.code === "PGRST204") &&
-    /\b(price|publish_imovelweb)\b/.test(error.message ?? ""),
+    /\b(price|publish_imovelweb|covered_area_m2)\b/.test(error.message ?? ""),
   );
 }
 

@@ -38,6 +38,7 @@ export type Property = {
   address: string | null;
   zip_code: string | null;
   area_m2: number | null;
+  covered_area_m2?: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
   parking_spots: number | null;

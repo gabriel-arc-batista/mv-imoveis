@@ -24,6 +24,27 @@ test("ordinary showcase listing needs neither price nor XML opt-in", () => {
   assert.equal(result.data.price, null);
   assert.equal(result.data.publish_imovelweb, false);
 });
+test("covered area is explicit, can be cleared and is independently validated", () => {
+  const result = parsePropertyForm(
+    form({ area_m2: "85.6", covered_area_m2: "70.25" }),
+  );
+  assert.ok(result.success);
+  assert.equal(result.data.covered_area_m2, 70.25);
+  assert.ok(
+    parsePropertyForm(
+      form({ type: "casa", area_m2: "85.6", covered_area_m2: "150" }),
+    ).success,
+  );
+  assert.equal(
+    parsePropertyForm(form({ covered_area_m2: "" })).data.covered_area_m2,
+    null,
+  );
+  for (const covered_area_m2 of ["0", "-1", "Infinity"])
+    assert.equal(
+      parsePropertyForm(form({ area_m2: "85.6", covered_area_m2 })).success,
+      false,
+    );
+});
 test("XML opt-in requires whole-real positive price", () => {
   for (const price of ["", "0", "-10", "3500.4", "Infinity", "not-a-number"])
     assert.equal(

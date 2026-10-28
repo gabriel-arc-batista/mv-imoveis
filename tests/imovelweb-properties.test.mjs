@@ -83,3 +83,46 @@ test("pagination failure, truncated data or changing counts rejects the whole lo
     );
   }
 });
+
+test("oversized or missing counts fail immediately instead of reading a partial catalog", async () => {
+  for (const total of [10001, null]) {
+    let reads = 0;
+    await withDatabase(
+      (_req, res) => {
+        reads++;
+        res.writeHead(200, {
+          "Content-Type": "application/json",
+          ...(total === null ? {} : { "Content-Range": `0-0/${total}` }),
+        });
+        res.end(JSON.stringify([property()]));
+      },
+      async () =>
+        assert.rejects(
+          getFeedProperties(),
+          (error) =>
+            error.reason === (total === null ? "read_failed" : "catalog_limit"),
+        ),
+    );
+    assert.equal(reads, 1);
+  }
+});
+
+test("admin overview reads all opted-in statuses, with the same complete pagination", async () => {
+  await withDatabase(
+    (req, res) => {
+      const url = new URL(req.url, "http://localhost");
+      assert.equal(url.searchParams.get("publish_imovelweb"), "eq.true");
+      assert.equal(url.searchParams.has("status"), false);
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Content-Range": "0-0/1",
+      });
+      res.end(JSON.stringify([property({ status: "vendido" })]));
+    },
+    async () =>
+      assert.equal(
+        (await getFeedProperties({ includeSold: true }))[0].status,
+        "vendido",
+      ),
+  );
+});

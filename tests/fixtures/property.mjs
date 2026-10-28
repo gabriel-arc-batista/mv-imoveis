@@ -13,6 +13,7 @@ export const property = (overrides = {}) => ({
   address: "Rua de Teste, 123",
   zip_code: "54400-000",
   area_m2: 85.6,
+  covered_area_m2: 70.25,
   bedrooms: 3,
   bathrooms: 2,
   parking_spots: 0,

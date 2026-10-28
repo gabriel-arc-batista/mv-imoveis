@@ -6,6 +6,8 @@ process.stdout.write(
   buildImovelwebFeed(
     [
       property({
+        // Exercita o limite de 80 caracteres Unicode, que ocupam 160 unidades UTF-16.
+        title: "🏡".repeat(80),
         description:
           "Descrição com acentos, & e <símbolos>, incluindo ]]> como texto. ".repeat(
             2,

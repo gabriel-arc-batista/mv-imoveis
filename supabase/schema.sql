@@ -41,11 +41,16 @@ create table public.properties (
   features text[] not null default '{}',
   is_featured boolean not null default false,
   price numeric,
+  covered_area_m2 numeric,
   publish_imovelweb boolean not null default false,
   constraint properties_imovelweb_price_check
     check (price is null or (price > 0 and price <= 999999999999 and price = trunc(price))),
   constraint properties_imovelweb_selected_price_check
     check (not publish_imovelweb or price is not null),
+  constraint properties_covered_area_check
+    check (covered_area_m2 is null or (
+      covered_area_m2 > 0 and covered_area_m2 < 'Infinity'::numeric
+    )),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

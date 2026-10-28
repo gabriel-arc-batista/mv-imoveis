@@ -32,11 +32,24 @@ test("server rejection preserves fields and export selection; city changes clear
   await page
     .getByRole("checkbox", { name: "Exibir em destaque na página inicial" })
     .check();
+  await page.getByLabel("Área total (m²)", { exact: true }).fill("85.6");
+  await page
+    .getByLabel("Área construída/coberta (m²)", { exact: true })
+    .fill("70.25");
   await page.getByRole("button", { name: "Salvar teste" }).click();
 
   await expect(page.locator("form").getByRole("alert")).toContainText(
     "Preço recebido: 3500; XML: on",
   );
+  await expect(page.locator("form").getByRole("alert")).toContainText(
+    "Áreas: 85.6/70.25",
+  );
+  await expect(page.getByLabel("Área total (m²)", { exact: true })).toHaveValue(
+    "85.6",
+  );
+  await expect(
+    page.getByLabel("Área construída/coberta (m²)", { exact: true }),
+  ).toHaveValue("70.25");
   await expect(page.getByLabel("Título", { exact: true })).toHaveValue(
     "Título preservado depois de erro",
   );

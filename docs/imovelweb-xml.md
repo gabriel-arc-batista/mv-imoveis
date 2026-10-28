@@ -2,7 +2,7 @@
 
 Esta implementação exporta imóveis selecionados no painel da MV para o Imovelweb.
 O site continua como vitrine com WhatsApp. Não há importação do catálogo do portal,
-webhook de leads, CRM ou mudança no destino dos contatos.
+webhook de leads ou CRM. A configuração de Integração de Leads do portal deve ser preservada.
 
 ## Estado de entrega e ambientes
 
@@ -25,7 +25,7 @@ existente, revisar e aplicar somente
 de venda/aluguel já existente. Não aplicar novamente o schema completo sobre um
 banco em uso.
 
-A migration adiciona `price` e `publish_imovelweb`; todos os imóveis existentes
+A migration adiciona `price`, `covered_area_m2` e `publish_imovelweb`; todos os imóveis existentes
 ficam fora do XML. `price` é um decimal exato com restrições de valor positivo,
 inteiro e máximo de R$ 999.999.999.999. O banco não arredonda o valor de entrada.
 O preço não aparece na interface pública; o acesso público às tabelas segue as
@@ -54,11 +54,21 @@ imóveis disponíveis e selecionados explicitamente, com:
 - Entre cinco e cinquenta fotos em URLs HTTPS distintas. O painel atual permite
   até vinte fotos. A capa vem primeiro e as demais seguem a ordem do cadastro.
 
+A área total (`area_m2`, `CFT100`) e a área construída/coberta confirmada
+(`covered_area_m2`, `CFT101`) são medidas distintas. Para imóveis que não são
+terrenos, a área construída precisa ser informada separadamente, com a medida confirmada.
+Para terrenos, somente a área total é enviada. A migration deixa a nova área
+nula: não copia nem presume valores dos imóveis existentes. Antes de exportar
+cadastros antigos, conferir qual medida havia sido preenchida em `area_m2`.
 As áreas mantêm as casas decimais e contagens iguais a zero são preservadas.
 Tipo de publicação: `SIMPLE`. Os IDs de tipo/subtipo e características básicas
 devem ser confirmados na homologação com o portal. Características livres do site,
 como piscina e varanda, não são convertidas automaticamente em IDs do catálogo.
 Não anunciar essa versão como um espelhamento integral de todas as características.
+
+Os limites de texto são verificados por caracteres Unicode e pelo conteúdo
+serializado, incluindo bloqueio de campos obrigatórios que ficariam vazios depois
+da limpeza XML. URLs de fotos equivalentes não contam como imagens distintas.
 
 O XML usa `dataModificacao` em milissegundos, UTF-8 e CDATA com tratamento de
 caracteres especiais e caracteres inválidos de XML 1.0.
@@ -86,8 +96,17 @@ O feed usa a chave pública e as políticas de leitura do catálogo; não precis
 `service_role` nem de credenciais de API do Imovelweb. Manter as variáveis do XML
 somente no servidor, sem prefixo `NEXT_PUBLIC_`.
 
+Os campos de contato do publicador são opcionais. Para preservar o atendimento,
+deixá-los omitidos ou usar os contatos atuais confirmados com o suporte. Preencher
+um contato diferente envia esse valor no anúncio; não presumir que o portal irá
+ignorá-lo. Isso é separado da configuração de webhook de leads.
+
 A URL tem o formato `/imovelweb/feed.xml?token=CHAVE`. O painel protegido
-`/admin/imovelweb` mostra o endereço depois de configurado. Não colocar essa URL
+`/admin/imovelweb` mostra o endereço depois de validar a configuração e o catálogo.
+Preview nunca usa o domínio de produção como alternativa: sem domínio próprio,
+a URL não é oferecida. Em ambientes remotos, só aceita HTTPS e rejeita credenciais
+no endereço. Um bloqueio de ambiente aparece como indisponibilidade, mesmo que
+a variável de habilitação esteja marcada. Não colocar essa URL
 em links públicos, comentários de PR ou logs. Rotacionar a chave exige atualizar
 a URL cadastrada no portal.
 
@@ -97,9 +116,19 @@ a URL cadastrada no portal.
 - Feed desativado, chave ausente/fraca ou chave incorreta: `404`, sem consultar o banco.
 - Configuração incompleta, schema ausente, erro de leitura, paginação incompleta,
   carga vazia ou imóvel selecionado incompleto: `503`, sem XML parcial.
-- Sucesso: `application/xml; charset=utf-8`, `Cache-Control: no-store` e `noindex`.
+- Sucesso: `application/xml; charset=utf-8`, `Cache-Control: no-store`, `noindex` e `nosniff`.
 - A consulta percorre páginas de 250 registros, exige contagem completa e rejeita
-  mudanças de contagem durante a leitura. O limite atual é 10.000 imóveis.
+  mudanças de contagem durante a leitura. O limite atual é 10.000 imóveis;
+  contagem acima desse limite é rejeitada já na primeira página. O painel usa
+  essa mesma leitura completa, incluindo os selecionados vendidos para diagnóstico.
+  Erros de consulta não são apresentados como catálogo vazio ou contagem zero.
+
+Falhas autorizadas registram o evento `imovelweb_xml_unavailable` com uma categoria
+conhecida (`configuration_invalid`, `environment_blocked`, `schema_missing`,
+`read_failed`, `catalog_incomplete`, `catalog_changed`, `catalog_limit`,
+`catalog_timeout`, `catalog_empty`, `property_invalid`, `identifier_duplicate` ou
+`unexpected`). Não registrar URL, token, conteúdo do imóvel ou mensagens brutas
+vindas do banco. O painel registra falhas de leitura com o mesmo cuidado.
 
 O endpoint não faz chamadas de publicação ao portal e não roda cron. É o Imovelweb
 que consulta a URL. A frequência e o tratamento de erros HTTP devem ser confirmados
@@ -110,6 +139,8 @@ o feed retorna `503`. Para encerrar o último anúncio ou desligar a integraçã
 combinar o procedimento com o suporte, em vez de enviar uma carga vazia acidental.
 
 ## Ativação no portal: passos ainda pendentes
+
+Roteiro operacional e migração do catálogo: [implantação](imovelweb-implantacao.md).
 
 1. Confirmar com Matheus o fluxo de cadastro e com o suporte a coexistência de
    anúncios manuais, vínculo de referências e efeito de omitir um imóvel da carga.

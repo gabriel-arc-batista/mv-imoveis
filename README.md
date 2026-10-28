@@ -104,7 +104,8 @@ O painel permite informar um preço específico para o portal e selecionar quais
 imóveis entram no XML. O feed fica desativado por padrão, exige uma chave e não
 altera o atendimento de leads nem os botões de WhatsApp.
 
-Consulte [configuração, migration, testes e ativação](docs/imovelweb-xml.md).
+Consulte [configuração, migration e testes](docs/imovelweb-xml.md) e o
+[passo a passo de ativação e migração do catálogo](docs/imovelweb-implantacao.md).
 A migration nova é preparada e testada em banco isolado; não é aplicada
 automaticamente em produção. A aceitação da carga ainda precisa ser homologada
 pelo portal.
