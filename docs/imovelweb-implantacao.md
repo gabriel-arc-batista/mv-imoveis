@@ -96,8 +96,19 @@ Após revisão do PR para `dev`, ensaio completo e aprovação explícita de pro
 3. Configurar código da imobiliária, estado, chave do feed e domínio público na
    Vercel Production. Manter contatos opcionais omitidos ou iguais aos atuais,
    conforme confirmação do suporte, sem alterar Integração de Leads.
+   Usar `IMOVELWEB_CODIGO_IMOBILIARIA`, `IMOVELWEB_ESTADO`,
+   `IMOVELWEB_FEED_TOKEN` (aleatório, com pelo menos 32 caracteres) e
+   `NEXT_PUBLIC_SITE_URL` (origem HTTPS definitiva). Manter
+   `IMOVELWEB_XML_ENABLED=false` nesta etapa. Alterações nas variáveis da Vercel
+   só chegam ao aplicativo em um novo deployment; fazer redeploy após configurá-las.
 4. Selecionar o conjunto de anúncios definido com o suporte e corrigir as pendências
-   do painel. Habilitar o feed e conferir a resposta completa na URL definitiva.
+   em `/admin/imovelweb`. Habilitar `IMOVELWEB_XML_ENABLED=true`, fazer novo
+   deployment e conferir GET/HEAD na URL definitiva: ambos devem responder 200
+   com `Content-Type: application/xml`; GET contém o catálogo completo e HEAD
+   não contém corpo. O portal precisa acessar essa URL por HTTPS usando a chave
+   na query string, sem login administrativo nem bloqueio de acesso da Vercel.
+   Conferir também o acesso público às fotos. Uma resposta 404/503 não é uma carga
+   pronta para ativação.
 5. Na Central do Anunciante: **Perfil → Imobiliária/Corretor → Integração de Anúncios
    → XML**. Informar a URL definitiva com chave e salvar, seguindo a orientação
    recebida do suporte. Não cadastrar a URL em documentação ou comentários públicos.

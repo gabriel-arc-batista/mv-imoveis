@@ -106,6 +106,9 @@ altera o atendimento de leads nem os botões de WhatsApp.
 
 Consulte [configuração, migration e testes](docs/imovelweb-xml.md) e o
 [passo a passo de ativação e migração do catálogo](docs/imovelweb-implantacao.md).
+O [relatório de verificação de 2026-10-31](docs/imovelweb-verificacao-2026-10-31.md)
+registra os checks finais, a pendência de dependências de desenvolvimento e os
+limites da validação antes da ativação no portal.
 A migration nova é preparada e testada em banco isolado; não é aplicada
 automaticamente em produção. A aceitação da carga ainda precisa ser homologada
 pelo portal.
