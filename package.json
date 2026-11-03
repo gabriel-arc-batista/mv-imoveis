@@ -2,29 +2,38 @@
   "name": "mv-imoveis",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-transform-types --no-warnings --import ./tests/register.mjs --test tests/*.test.mjs",
+    "test:xml-schema": "node --experimental-transform-types --no-warnings --import ./tests/register.mjs tests/emit-feed.mts | python3 scripts/validate-xml.py",
+    "test:migration": "node scripts/test-xml-migration.mjs",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.58.0",
     "framer-motion": "^13.1.0",
     "lenis": "^1.3.11",
-    "next": "16.3.1",
-    "zod": "^4.1.13",
+    "next": "16.4.3",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "4.6.6"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.3.1",
+    "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin", label: "Visão geral", icon: OverviewIcon },
   { href: "/admin/imoveis", label: "Imóveis", icon: BuildingIcon },
   { href: "/admin/cidades", label: "Cidades e bairros", icon: MapIcon },
+  { href: "/admin/imovelweb", label: "Imovelweb", icon: ExternalIcon },
 ];
 
 export function Sidebar({ email }: { email: string }) {
@@ -131,7 +132,13 @@ export function Sidebar({ email }: { email: string }) {
 
 function OverviewIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      {...props}
+    >
       <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
       <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
       <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
@@ -142,9 +149,18 @@ function OverviewIcon(props: React.SVGProps<SVGSVGElement>) {
 
 function BuildingIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      {...props}
+    >
       <rect x="5" y="3" width="14" height="18" rx="1" />
-      <path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1" strokeLinecap="round" />
+      <path
+        d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1"
+        strokeLinecap="round"
+      />
       <path d="M10 21v-3h4v3" />
     </svg>
   );
@@ -152,25 +168,59 @@ function BuildingIcon(props: React.SVGProps<SVGSVGElement>) {
 
 function MapIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
-      <path d="M9 20 3.5 18V5L9 7m0 13 6-2m-6 2V7m6 11 5.5 2V7L15 5m0 13V5m0 0L9 7" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      {...props}
+    >
+      <path
+        d="M9 20 3.5 18V5L9 7m0 13 6-2m-6 2V7m6 11 5.5 2V7L15 5m0 13V5m0 0L9 7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 function ExternalIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
-      <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      {...props}
+    >
+      <path
+        d="M7 17 17 7M9 7h8v8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
 
 function LogoutIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} {...props}>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      {...props}
+    >
+      <path
+        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16 17l5-5-5-5M21 12H9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
