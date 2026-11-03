@@ -48,16 +48,16 @@ imóveis disponíveis e selecionados explicitamente, com:
 
 - Identificador estável UUID em `codigoAnuncio`; o código editável fica em
   `codigoReferencia`, com até 99 caracteres.
-- Tipo suportado, título entre 10 e 80 caracteres e descrição de 50 a 10.000.
+- Tipo suportado, título entre 1 e 80 caracteres e descrição de 50 a 10.000.
 - Preço inteiro positivo em BRL, com operação `VENTA` ou `ALQUILER`.
-- Cidade e bairro consistentes, endereço, CEP de oito dígitos e área positiva.
+- Cidade e bairro consistentes, endereço e área total positiva. CEP é opcional no XSD brasileiro; quando informado, deve ter oito dígitos.
 - Entre cinco e cinquenta fotos em URLs HTTPS distintas. O painel atual permite
   até vinte fotos. A capa vem primeiro e as demais seguem a ordem do cadastro.
 
 A área total (`area_m2`, `CFT100`) e a área construída/coberta confirmada
-(`covered_area_m2`, `CFT101`) são medidas distintas. Para imóveis que não são
-terrenos, a área construída precisa ser informada separadamente, com a medida confirmada.
-Para terrenos, somente a área total é enviada. A migration deixa a nova área
+(`covered_area_m2`, `CFT101`) são medidas distintas. A área construída é opcional no
+XSD brasileiro; se não estiver confirmada, `CFT101` é omitida (não se presume
+que ela seja igual à área total). Para terrenos, somente a área total é enviada. A migration deixa a nova área
 nula: não copia nem presume valores dos imóveis existentes. Antes de exportar
 cadastros antigos, conferir qual medida havia sido preenchida em `area_m2`.
 As áreas mantêm as casas decimais e contagens iguais a zero são preservadas.
