@@ -202,10 +202,14 @@ export function PropertyForm({
           />
         </Field>
 
-        <Field label="CEP (opcional)" htmlFor="zip_code">
+        <Field
+          label={exporting ? "CEP (obrigatório para Imovelweb)" : "CEP (opcional)"}
+          htmlFor="zip_code"
+        >
           <input
             id="zip_code"
             name="zip_code"
+            required={exporting}
             {...field("zip_code")}
             className={inputClass}
           />
