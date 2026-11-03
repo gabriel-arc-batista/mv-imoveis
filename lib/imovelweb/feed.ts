@@ -57,8 +57,8 @@ export function getImovelwebIssues(property: Property): string[] {
     xmlText(property.code) !== property.code
   )
     issues.push("Código deve ter até 99 caracteres");
-  if (xmlLength(title) < 10 || xmlLength(title) > 80)
-    issues.push("Título deve ter entre 10 e 80 caracteres");
+  if (xmlLength(title) < 1 || xmlLength(title) > 80)
+    issues.push("Título deve ter entre 1 e 80 caracteres");
   if (xmlLength(description) < 50 || xmlLength(description) > 10000)
     issues.push("Descrição deve ter entre 50 e 10.000 caracteres");
   if (!Object.hasOwn(TYPES, property.type))
@@ -91,19 +91,19 @@ export function getImovelwebIssues(property: Property): string[] {
   const address = xmlText(property.address ?? "").trim();
   if (!address || xmlLength(address) > 200)
     issues.push("Informe endereço com até 200 caracteres");
-  if (!/^\d{8}$/.test(property.zip_code?.replace(/\D/g, "") ?? ""))
-    issues.push("Informe CEP com 8 dígitos");
+  // A integração exige CEP, embora o XSD permita omitir codigoPostal.
+  if (!/^\d{5}-?\d{3}$/.test(property.zip_code?.trim() ?? ""))
+    issues.push("Informe CEP válido com 8 dígitos para o Imovelweb");
   if (!validNumber(property.area_m2) || Number(property.area_m2) <= 0)
     issues.push("Informe área total maior que zero");
-  if (property.type !== "terreno") {
-    if (
-      !validNumber(property.covered_area_m2) ||
-      Number(property.covered_area_m2) <= 0
-    )
-      issues.push(
-        "Informe a área construída/coberta confirmada, maior que zero",
-      );
-  }
+  // CFT101 é opcional no XSD brasileiro; validar apenas quando informado.
+  if (
+    property.type !== "terreno" &&
+    property.covered_area_m2 != null &&
+    (!validNumber(property.covered_area_m2) ||
+      Number(property.covered_area_m2) <= 0)
+  )
+    issues.push("Área construída/coberta deve ser maior que zero se informada");
   for (const [name, value] of [
     ["Quartos", property.bedrooms],
     ["Banheiros", property.bathrooms],
@@ -135,8 +135,8 @@ function renderProperty(property: Property, config: FeedConfig): string {
     ["CFT7", property.parking_spots],
     ["CFT100", property.area_m2],
   ];
-  if (property.type !== "terreno")
-    characteristics.push(["CFT101", property.covered_area_m2!]);
+  if (property.type !== "terreno" && property.covered_area_m2 != null)
+    characteristics.push(["CFT101", property.covered_area_m2]);
   const features = characteristics
     .filter(([, value]) => value != null)
     .map(

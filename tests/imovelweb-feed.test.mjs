@@ -130,17 +130,20 @@ test("invalid selected property blocks the whole feed instead of disappearing si
   assert.throws(() => buildImovelwebFeed([], feedConfig), /vazi|nenhum/i);
 });
 
-test("BR requirements: five photos, description length, postal code and supported type", () => {
+test("BR requirements: five photos, description length, valid postal code and supported type", () => {
   for (const patch of [
     { photos: property().photos.slice(0, 4) },
     { description: "Curta" },
     { zip_code: "123" },
+    { zip_code: null },
+    { zip_code: "" },
+    { zip_code: "abc54400000" },
     { type: "outro" },
     { address: "" },
     { area_m2: 0 },
-    { covered_area_m2: null },
     { covered_area_m2: -1 },
     { covered_area_m2: Infinity },
+    { title: "" },
     { title: "a".repeat(81) },
     { neighborhood: { id: "x", city_id: "other", name: "Bairro" } },
   ]) {
@@ -150,6 +153,36 @@ test("BR requirements: five photos, description length, postal code and supporte
     );
   }
   assert.deepEqual(getImovelwebIssues(property()), []);
+});
+
+test("covered area is omitted when absent while CEP is preserved", () => {
+  const candidate = property({
+    title: "Casa",
+    zip_code: "54400-000",
+    covered_area_m2: null,
+  });
+  assert.deepEqual(getImovelwebIssues(candidate), []);
+  const root = parse(buildImovelwebFeed([candidate], feedConfig));
+  const item = child(child(root, "Imoveis"), "Imovel");
+  const location = child(item, "localizacao");
+  assert.equal(child(location, "codigoPostal").text, "54400000");
+  const features = children(child(item, "caracteristicas"), "caracteristica");
+  assert.equal(
+    features.some((f) => child(f, "id").text === "CFT101"),
+    false,
+  );
+  assert.equal(child(item, "titulo").text, "Casa");
+});
+
+test("provided CEP and covered area remain in the XML", () => {
+  const root = parse(buildImovelwebFeed([property()], feedConfig));
+  const item = child(child(root, "Imoveis"), "Imovel");
+  assert.equal(child(child(item, "localizacao"), "codigoPostal").text, "54400000");
+  const features = children(child(item, "caracteristicas"), "caracteristica");
+  assert.equal(
+    child(features.find((f) => child(f, "id").text === "CFT101"), "valor").text,
+    "70.25",
+  );
 });
 
 test("land exports only the confirmed total area, without inferring a covered area", () => {

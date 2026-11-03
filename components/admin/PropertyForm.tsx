@@ -88,6 +88,7 @@ export function PropertyForm({
             id="title"
             name="title"
             required
+            maxLength={exporting ? 80 : undefined}
             {...field("title")}
             className={inputClass}
           />
@@ -98,6 +99,7 @@ export function PropertyForm({
             id="code"
             name="code"
             required
+            maxLength={exporting ? 99 : undefined}
             {...field("code")}
             className={inputClass}
           />
@@ -193,31 +195,38 @@ export function PropertyForm({
           </select>
         </Field>
 
-        <Field label="Endereço (opcional)" htmlFor="address">
+        <Field label={exporting ? "Endereço (obrigatório para Imovelweb)" : "Endereço (opcional)"} htmlFor="address">
           <input
             id="address"
             name="address"
+            required={exporting}
+            maxLength={exporting ? 200 : undefined}
             {...field("address")}
             className={inputClass}
           />
         </Field>
 
-        <Field label="CEP (opcional)" htmlFor="zip_code">
+        <Field
+          label={exporting ? "CEP (obrigatório para Imovelweb)" : "CEP (opcional)"}
+          htmlFor="zip_code"
+        >
           <input
             id="zip_code"
             name="zip_code"
+            required={exporting}
             {...field("zip_code")}
             className={inputClass}
           />
         </Field>
 
-        <Field label="Área total (m²)" htmlFor="area_m2">
+        <Field label={exporting ? "Área total (m²) — obrigatória para Imovelweb" : "Área total (m²)"} htmlFor="area_m2">
           <input
             id="area_m2"
             name="area_m2"
             type="number"
             step="0.01"
-            min="0"
+            min="0.01"
+            required={exporting}
             {...field("area_m2")}
             className={inputClass}
           />
@@ -282,6 +291,9 @@ export function PropertyForm({
           id="description"
           name="description"
           rows={5}
+          required={exporting}
+          minLength={exporting ? 50 : undefined}
+          maxLength={exporting ? 10000 : undefined}
           {...field("description")}
           className={inputClass}
         />
@@ -348,10 +360,11 @@ export function PropertyForm({
           Incluir este imóvel no XML do Imovelweb
         </label>
         <p className="mt-2 text-xs text-admin-ink-soft">
-          Para entrar na carga: imóvel disponível, título de 10 a 80 caracteres,
-          descrição de pelo menos 50 caracteres, endereço, CEP, áreas
-          confirmadas e pelo menos 5 fotos. Salve o imóvel para adicionar as
-          fotos.
+          Para entrar na carga: imóvel disponível, tipo aceito, título de 3 a 80
+          caracteres, descrição com pelo menos 50 caracteres, preço,
+          endereço, CEP e área total. A área construída é opcional.
+          São necessárias pelo menos 5 fotos: salve primeiro o imóvel para
+          adicioná-las. Sem elas, o XML não será disponibilizado.
         </p>
       </fieldset>
 

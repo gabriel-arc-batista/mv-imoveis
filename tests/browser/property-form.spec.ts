@@ -16,7 +16,7 @@ test("server rejection preserves fields and export selection; city changes clear
   await page.getByLabel("Código", { exact: true }).fill("MV-DUPLICADO");
   await page
     .getByLabel("Descrição", { exact: true })
-    .fill("Descrição mantida após erro do servidor.");
+    .fill("Descrição mantida após erro do servidor, com mais de cinquenta caracteres.");
   await page
     .getByLabel("Cidade", { exact: true })
     .selectOption({ label: "Cidade 1" });
@@ -29,10 +29,12 @@ test("server rejection preserves fields and export selection; city changes clear
   await page
     .getByRole("checkbox", { name: "Incluir este imóvel no XML do Imovelweb" })
     .check();
+  await page.getByLabel("Endereço (obrigatório para Imovelweb)").fill("Rua de Teste, 123");
+  await page.getByLabel("CEP (obrigatório para Imovelweb)").fill("54400-000");
   await page
     .getByRole("checkbox", { name: "Exibir em destaque na página inicial" })
     .check();
-  await page.getByLabel("Área total (m²)", { exact: true }).fill("85.6");
+  await page.getByLabel("Área total (m²) — obrigatória para Imovelweb", { exact: true }).fill("85.6");
   await page
     .getByLabel("Área construída/coberta (m²)", { exact: true })
     .fill("70.25");
@@ -44,7 +46,7 @@ test("server rejection preserves fields and export selection; city changes clear
   await expect(page.locator("form").getByRole("alert")).toContainText(
     "Áreas: 85.6/70.25",
   );
-  await expect(page.getByLabel("Área total (m²)", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Área total (m²) — obrigatória para Imovelweb", { exact: true })).toHaveValue(
     "85.6",
   );
   await expect(
@@ -57,7 +59,7 @@ test("server rejection preserves fields and export selection; city changes clear
     "MV-DUPLICADO",
   );
   await expect(page.getByLabel("Descrição", { exact: true })).toHaveValue(
-    "Descrição mantida após erro do servidor.",
+    "Descrição mantida após erro do servidor, com mais de cinquenta caracteres.",
   );
   await expect(page.getByLabel("Cidade", { exact: true })).toHaveValue(
     "11111111-1111-4111-8111-111111111111",
