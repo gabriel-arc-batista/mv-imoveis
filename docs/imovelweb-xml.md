@@ -38,8 +38,14 @@ No cadastro:
 3. Salvar, enviar as fotos e corrigir as pendências exibidas no painel.
 
 Um imóvel pode continuar apenas na vitrine, sem preço e sem seleção para o XML.
+Ao marcar a publicação, o formulário exige também CEP, endereço, área total,
+descrição (mínimo 50 caracteres), tipo suportado e limites de título/referência.
+As cinco fotos só podem ser adicionadas depois do primeiro salvamento e são
+validadas antes da geração do feed; enquanto faltarem, o XML fica bloqueado.
 O formulário preserva os valores quando o servidor devolve erro de validação ou
 de persistência. O preço não será enviado com centavos nem arredondado silenciosamente.
+A confirmação definitiva dos critérios de aceitação depende do suporte/homologação
+do Imovelweb, pois o XSD não cobre todas as regras de publicação.
 
 ## Regras da carga
 
@@ -50,7 +56,7 @@ imóveis disponíveis e selecionados explicitamente, com:
   `codigoReferencia`, com até 99 caracteres.
 - Tipo suportado, título entre 1 e 80 caracteres e descrição de 50 a 10.000.
 - Preço inteiro positivo em BRL, com operação `VENTA` ou `ALQUILER`.
-- Cidade e bairro consistentes, endereço e área total positiva. CEP é opcional no XSD brasileiro; quando informado, deve ter oito dígitos.
+- Cidade e bairro consistentes, endereço e área total positiva. O CEP com oito dígitos é obrigatório para publicação no Imovelweb, conforme orientação de integrador (embora `codigoPostal` seja opcional no XSD brasileiro).
 - Entre cinco e cinquenta fotos em URLs HTTPS distintas. O painel atual permite
   até vinte fotos. A capa vem primeiro e as demais seguem a ordem do cadastro.
 
