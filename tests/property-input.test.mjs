@@ -52,12 +52,35 @@ test("XML opt-in requires whole-real positive price", () => {
       false,
     );
   const result = parsePropertyForm(
-    form({ publish_imovelweb: "on", price: "3500" }),
+    form({ publish_imovelweb: "on", price: "3500", zip_code: "54400-000" }),
   );
   assert.ok(result.success);
   assert.equal(result.data.price, 3500);
   assert.equal(result.data.publish_imovelweb, true);
 });
+test("CEP is mandatory only for Imovelweb export", () => {
+  for (const zip_code of ["", "123", "abc54400000", "54400-0A0"]) {
+    assert.equal(
+      parsePropertyForm(
+        form({ publish_imovelweb: "on", price: "3500", zip_code }),
+      ).success,
+      false,
+      zip_code,
+    );
+    assert.equal(
+      parsePropertyForm(form({ publish_imovelweb: "false", zip_code })).success,
+      true,
+      zip_code,
+    );
+  }
+  for (const zip_code of ["54400-000", "54400000"]) {
+    const result = parsePropertyForm(
+      form({ publish_imovelweb: "on", price: "3500", zip_code }),
+    );
+    assert.equal(result.success, true, zip_code);
+  }
+});
+
 test("unchecking export and clearing price explicitly clears stored values", () => {
   const result = parsePropertyForm(
     form({ price: "", publish_imovelweb: "false" }),
