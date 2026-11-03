@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+           vc:minVersion="1.1"
+           elementFormDefault="qualified">
+
+    <!-- Tipos simples con restricciones de longitud -->
+    <xs:simpleType name="CodigoAvisoType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="100"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="CodigoReferenciaType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="99"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TituloType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="80"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="DescricaoType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="50"/>
+            <xs:maxLength value="10000"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="EnderecoType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="200"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="EmailUsuarioType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="200"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="EmailContatoType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="255"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="NomeContatoType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="255"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="TelefoneContatoType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+            <xs:maxLength value="255"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="MostrarMapaType">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="2"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="CodigoPostalType">
+        <xs:restriction base="xs:string">
+            <xs:maxLength value="100"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Elemento raíz OpenNavent (en portugués de Brasil) -->
+    <xs:element name="OpenNavent">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="dataModificacao" type="xs:string" minOccurs="1"/>
+                <xs:element name="Lancamentos" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Lancamento" type="LancamentoType" minOccurs="1" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Imoveis" minOccurs="1">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Imovel" type="ImovelType" minOccurs="1" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+            <!-- Permite atributos adicionales (como xmlns:xsd, xmlns:xsi, etc.) sin fallar la validación -->
+            <xs:anyAttribute processContents="skip"/>
+        </xs:complexType>
+    </xs:element>
+
+    <!-- Tipo Imovel basado en OpenNaventAviso (en portugués) -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="ImovelType">
+        <xs:all>
+            <!-- codigoAnuncio: obligatorio, 1-100 caracteres -->
+            <xs:element name="codigoAnuncio" type="CodigoAvisoType" minOccurs="1"/>
+
+            <!-- tipoPropriedade: obligatorio -->
+            <xs:element name="tipoPropriedade" type="TipoPropriedadeType" minOccurs="1"/>
+
+            <!-- caracteristicas: obligatorio -->
+            <xs:element name="caracteristicas" type="CaracteristicasType" minOccurs="1"/>
+
+            <!-- codigoReferencia: obligatorio, 1-99 caracteres -->
+            <xs:element name="codigoReferencia" type="CodigoReferenciaType" minOccurs="1"/>
+
+            <!-- titulo: obligatorio, 1-80 caracteres -->
+            <xs:element name="titulo" type="TituloType" minOccurs="1"/>
+
+            <!-- descricao: obligatorio, 50-10000 caracteres -->
+            <xs:element name="descricao" type="DescricaoType" minOccurs="1"/>
+
+            <!-- precos: obligatorio -->
+            <xs:element name="precos" type="PrecosType" minOccurs="1"/>
+
+            <!-- multimidia: obligatorio -->
+            <xs:element name="multimidia" type="MultimidiaType" minOccurs="1"/>
+
+            <!-- localizacao: obligatorio -->
+            <xs:element name="localizacao" type="LocalizacaoType" minOccurs="1"/>
+
+            <!-- publicacao: obligatorio -->
+            <xs:element name="publicacao" type="PublicacaoType" minOccurs="1"/>
+
+            <!-- publicador: obligatorio -->
+            <xs:element name="publicador" type="PublicadorType" minOccurs="1"/>
+        </xs:all>
+    </xs:complexType>
+
+    <!-- Tipo Lancamento (similar a Imovel pero con campos adicionales) -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="LancamentoType">
+        <xs:all>
+            <xs:element name="codigoAnuncio" type="CodigoAvisoType" minOccurs="1"/>
+            <xs:element name="codigoReferencia" type="CodigoReferenciaType" minOccurs="1"/>
+            <xs:element name="titulo" type="TituloType" minOccurs="1"/>
+            <xs:element name="descricao" type="DescricaoType" minOccurs="1"/>
+            <xs:element name="tipoPropriedade" type="TipoPropriedadeType" minOccurs="1"/>
+            <xs:element name="urlLogo" type="xs:string" minOccurs="0"/>
+            <xs:element name="etapaLancamento" type="xs:string" minOccurs="0"/>
+            <xs:element name="dataEntrega" type="xs:string" minOccurs="0"/>
+            <xs:element name="caracteristicas" type="CaracteristicasType" minOccurs="1"/>
+            <xs:element name="multimidia" type="MultimidiaType" minOccurs="1"/>
+            <xs:element name="localizacao" type="LocalizacaoType" minOccurs="1"/>
+            <xs:element name="publicacao" type="PublicacaoType" minOccurs="1"/>
+            <xs:element name="publicador" type="PublicadorType" minOccurs="1"/>
+            <xs:element name="unidades" type="UnidadesType" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <!-- Tipo Unidades -->
+    <xs:complexType name="UnidadesType">
+        <xs:sequence>
+            <xs:element name="unidade" type="UnidadeType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Unidade -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="UnidadeType">
+        <xs:all>
+            <xs:element name="codigoAnuncio" type="CodigoAvisoType" minOccurs="1"/>
+            <xs:element name="codigoReferencia" type="CodigoReferenciaType" minOccurs="1"/>
+            <xs:element name="tipoPropriedade" type="TipoPropriedadeType" minOccurs="1"/>
+            <xs:element name="titulo" type="TituloType" minOccurs="1"/>
+            <xs:element name="descricao" type="DescricaoType" minOccurs="1"/>
+            <xs:element name="caracteristicas" type="CaracteristicasType" minOccurs="1"/>
+            <xs:element name="multimidia" type="MultimidiaType" minOccurs="1"/>
+            <xs:element name="precos" type="PrecosType" minOccurs="1"/>
+        </xs:all>
+    </xs:complexType>
+
+    <!-- Tipo TipoPropriedade -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="TipoPropriedadeType">
+        <xs:all>
+            <!-- idTipo: obligatorio -->
+            <xs:element name="idTipo" type="xs:string" minOccurs="1"/>
+            <!-- tipo: obligatorio -->
+            <xs:element name="tipo" type="xs:string" minOccurs="1"/>
+            <!-- idSubTipo: opcional -->
+            <xs:element name="idSubTipo" type="xs:string" minOccurs="0"/>
+            <!-- subTipo: opcional -->
+            <xs:element name="subTipo" type="xs:string" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <!-- Tipo Caracteristicas -->
+    <xs:complexType name="CaracteristicasType">
+        <xs:sequence>
+            <xs:element name="caracteristica" type="CaracteristicaType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Caracteristica -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="CaracteristicaType">
+        <xs:all>
+            <!-- nome: opcional (no se debería usar más) -->
+            <xs:element name="nome" type="xs:string" minOccurs="0"/>
+            <!-- id: obligatorio -->
+            <xs:element name="id" type="xs:string" minOccurs="1"/>
+            <!-- valor: obligatorio si la característica es "Campo numerico abierto" o "Campo abierto" -->
+            <!-- En otros casos, puede estar presente con el nombre del valor admitido -->
+            <xs:element name="valor" type="xs:string" minOccurs="0"/>
+            <!-- idValor: obligatorio si la característica NO es "Campo numerico abierto" ni "Campo abierto" -->
+            <!-- Si la característica es "Campo numerico abierto" o "Campo abierto", este campo NO debe estar presente -->
+            <xs:element name="idValor" type="xs:string" minOccurs="0"/>
+        </xs:all>
+        <!-- Validação XSD 1.1: Pelo menos um de valor ou idValor deve estar presente -->
+        <!-- Se a característica é "Campo numerico abierto" (Campo numérico aberto) ou "Campo abierto" (Campo aberto): apenas 'valor' é obrigatório -->
+        <!-- Se a característica é de outro tipo: 'idValor' é obrigatório -->
+        <xs:assert test="valor or idValor"/>
+    </xs:complexType>
+
+    <!-- Tipo Precos -->
+    <xs:complexType name="PrecosType">
+        <xs:sequence>
+            <xs:element name="preco" type="PrecoType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Preco -->
+    <xs:complexType name="PrecoType">
+        <xs:sequence>
+            <!-- quantidade: obligatorio, mínimo 1 carácter -->
+            <xs:element name="quantidade" type="xs:string" minOccurs="1"/>
+            <!-- moeda: obligatorio -->
+            <xs:element name="moeda" type="xs:string" minOccurs="1"/>
+            <!-- operacao: obligatorio -->
+            <xs:element name="operacao" type="xs:string" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Multimidia -->
+    <xs:complexType name="MultimidiaType">
+        <xs:sequence>
+            <!-- plantas: opcional -->
+            <xs:element name="plantas" type="PlantasType" minOccurs="0"/>
+            <!-- imagens: obligatorio, mínimo 5, máximo 50 -->
+            <xs:element name="imagens" type="ImagensType" minOccurs="1"/>
+            <!-- videos: opcional -->
+            <xs:element name="videos" type="VideosType" minOccurs="0"/>
+            <!-- tours360: opcional -->
+            <xs:element name="tours360" type="Tours360Type" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Plantas -->
+    <xs:complexType name="PlantasType">
+        <xs:sequence>
+            <xs:element name="planta" type="PlantaType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Planta -->
+    <xs:complexType name="PlantaType">
+        <xs:sequence>
+            <!-- urlImagem: obligatorio -->
+            <xs:element name="urlImagem" type="xs:string" minOccurs="1"/>
+            <!-- titulo: obligatorio, 1-80 caracteres -->
+            <xs:element name="titulo" type="TituloType" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Imagens -->
+    <xs:complexType name="ImagensType">
+        <xs:sequence>
+            <xs:element name="imagem" type="ImagemType" minOccurs="5" maxOccurs="50"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Imagem -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="ImagemType">
+        <xs:all>
+            <!-- urlImagem: obligatorio -->
+            <xs:element name="urlImagem" type="xs:string" minOccurs="1"/>
+            <!-- titulo: opcional, 1-80 caracteres -->
+            <xs:element name="titulo" type="TituloType" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <!-- Tipo Videos -->
+    <xs:complexType name="VideosType">
+        <xs:sequence>
+            <xs:element name="video" type="VideoType" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Video -->
+    <xs:complexType name="VideoType">
+        <xs:sequence>
+            <!-- codigoVideo: obligatorio -->
+            <xs:element name="codigoVideo" type="xs:string" minOccurs="1"/>
+            <!-- titulo: obligatorio, 1-80 caracteres -->
+            <xs:element name="titulo" type="TituloType" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Tours360 -->
+    <xs:complexType name="Tours360Type">
+        <xs:sequence>
+            <xs:element name="tour360" type="Tour360Type" minOccurs="1" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Tour360 -->
+    <xs:complexType name="Tour360Type">
+        <xs:sequence>
+            <!-- codigoTour360: obligatorio -->
+            <xs:element name="codigoTour360" type="xs:string" minOccurs="1"/>
+            <!-- titulo: obligatorio, 1-80 caracteres -->
+            <xs:element name="titulo" type="TituloType" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Localizacao -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="LocalizacaoType">
+        <xs:all>
+            <!-- endereco: obligatorio, 1-200 caracteres -->
+            <xs:element name="endereco" type="EnderecoType" minOccurs="1"/>
+            <!-- localidade: opcional -->
+            <xs:element name="localidade" type="xs:string" minOccurs="0"/>
+            <!-- idLocalidade: opcional -->
+            <xs:element name="idLocalidade" type="xs:string" minOccurs="0"/>
+            <!-- codigoPostal: opcional, máximo 100 caracteres -->
+            <xs:element name="codigoPostal" type="CodigoPostalType" minOccurs="0"/>
+            <!-- mostrarMapa: obligatorio, mínimo 2 caracteres -->
+            <xs:element name="mostrarMapa" type="MostrarMapaType" minOccurs="1"/>
+            <!-- longitude: opcional -->
+            <xs:element name="longitude" type="xs:string" minOccurs="0"/>
+            <!-- latitude: opcional -->
+            <xs:element name="latitude" type="xs:string" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+    <!-- Tipo Publicacao -->
+    <xs:complexType name="PublicacaoType">
+        <xs:sequence>
+            <!-- tipoPublicacao: obligatorio -->
+            <xs:element name="tipoPublicacao" type="xs:string" minOccurs="1"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Tipo Publicador -->
+    <!-- Usa xs:all para permitir que los elementos estén en cualquier orden -->
+    <xs:complexType name="PublicadorType">
+        <xs:all>
+            <!-- codigoImobiliaria: obligatorio -->
+            <xs:element name="codigoImobiliaria" type="xs:string" minOccurs="1"/>
+            <!-- emailUsuario: opcional, 1-200 caracteres -->
+            <xs:element name="emailUsuario" type="EmailUsuarioType" minOccurs="0"/>
+            <!-- emailContato: opcional, 1-255 caracteres -->
+            <xs:element name="emailContato" type="EmailContatoType" minOccurs="0"/>
+            <!-- nomeContato: opcional, 1-255 caracteres -->
+            <xs:element name="nomeContato" type="NomeContatoType" minOccurs="0"/>
+            <!-- telefoneContato: opcional, 1-255 caracteres -->
+            <xs:element name="telefoneContato" type="TelefoneContatoType" minOccurs="0"/>
+            <!-- callbackTokenClient: opcional -->
+            <xs:element name="callbackTokenClient" type="xs:string" minOccurs="0"/>
+        </xs:all>
+    </xs:complexType>
+
+</xs:schema>

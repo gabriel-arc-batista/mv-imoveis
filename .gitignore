@@ -10,6 +10,10 @@
 
 # testing
 /coverage
+.venv/
+/test-results/
+/playwright-report/
+/tests/browser/fixture/.next/
 
 # next.js
 /.next/
@@ -34,6 +38,7 @@ yarn-error.log*
 
 # vercel
 .vercel
+supabase/.temp/
 
 # typescript
 *.tsbuildinfo

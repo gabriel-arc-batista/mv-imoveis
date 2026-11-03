@@ -4,6 +4,7 @@ import { PROPERTY_TYPE_LABEL } from "@/lib/types";
 import { setPropertyStatus } from "@/app/admin/actions";
 import { DeletePropertyButton } from "@/components/admin/DeletePropertyButton";
 import { AdminPhotoCarousel } from "@/components/admin/AdminPhotoCarousel";
+import { ImovelwebStatus } from "@/components/admin/ImovelwebStatus";
 import { badge, button, card } from "@/components/admin/ui";
 
 export default async function AdminImoveisPage() {
@@ -59,7 +60,7 @@ export default async function AdminImoveisPage() {
                       action={setPropertyStatus.bind(
                         null,
                         property.id,
-                        nextStatus
+                        nextStatus,
                       )}
                       className="shrink-0"
                     >
@@ -68,7 +69,7 @@ export default async function AdminImoveisPage() {
                         className={`focus-ring transition-opacity hover:opacity-80 ${badge(
                           property.status === "disponivel"
                             ? "success"
-                            : "accent"
+                            : "accent",
                         )}`}
                         title={`Marcar como ${nextStatus === "vendido" ? "vendido" : "disponível"}`}
                       >
@@ -84,6 +85,7 @@ export default async function AdminImoveisPage() {
                       .filter(Boolean)
                       .join(", ") || "Local não definido"}
                   </p>
+                  <ImovelwebStatus property={property} />
 
                   <div className="mt-4 flex items-center justify-between border-t border-admin-border pt-4">
                     <span className="text-xs text-admin-ink-soft">

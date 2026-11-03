@@ -1,9 +1,5 @@
 export type PropertyType =
-  | "apartamento"
-  | "casa"
-  | "terreno"
-  | "comercial"
-  | "outro";
+  "apartamento" | "casa" | "terreno" | "comercial" | "outro";
 
 export type PropertyStatus = "disponivel" | "vendido";
 export type PropertyTransaction = "venda" | "aluguel";
@@ -42,11 +38,14 @@ export type Property = {
   address: string | null;
   zip_code: string | null;
   area_m2: number | null;
+  covered_area_m2?: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
   parking_spots: number | null;
   features: string[];
   is_featured: boolean;
+  price?: number | null;
+  publish_imovelweb?: boolean;
   created_at: string;
   updated_at: string;
   city?: City;
