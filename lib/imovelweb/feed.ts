@@ -91,8 +91,9 @@ export function getImovelwebIssues(property: Property): string[] {
   const address = xmlText(property.address ?? "").trim();
   if (!address || xmlLength(address) > 200)
     issues.push("Informe endereço com até 200 caracteres");
-  if (property.zip_code?.trim() && !/^\d{8}$/.test(property.zip_code.replace(/\D/g, "")))
-    issues.push("CEP deve ter 8 dígitos quando informado");
+  // A integração exige CEP, embora o XSD permita omitir codigoPostal.
+  if (!/^\d{5}-?\d{3}$/.test(property.zip_code?.trim() ?? ""))
+    issues.push("Informe CEP válido com 8 dígitos para o Imovelweb");
   if (!validNumber(property.area_m2) || Number(property.area_m2) <= 0)
     issues.push("Informe área total maior que zero");
   // CFT101 é opcional no XSD brasileiro; validar apenas quando informado.
@@ -165,7 +166,7 @@ ${tag("titulo", property.title.trim())}${tag("descricao", property.description.t
 <caracteristicas>${features}</caracteristicas>
 <precos><preco>${tag("quantidade", property.price!)}${tag("moeda", "BRL")}${tag("operacao", property.transaction_type === "aluguel" ? "ALQUILER" : "VENTA")}</preco></precos>
 <multimidia><imagens>${photos.map((photo) => `<imagem>${tag("urlImagem", photo.url)}</imagem>`).join("")}</imagens></multimidia>
-<localizacao>${tag("endereco", property.address!.trim())}${tag("localidade", location)}${property.zip_code?.trim() ? tag("codigoPostal", property.zip_code.replace(/\D/g, "")) : ""}${tag("mostrarMapa", "APROXIMADO")}</localizacao>
+<localizacao>${tag("endereco", property.address!.trim())}${tag("localidade", location)}${tag("codigoPostal", property.zip_code!.replace(/\D/g, ""))}${tag("mostrarMapa", "APROXIMADO")}</localizacao>
 <publicacao>${tag("tipoPublicacao", "SIMPLE")}</publicacao>
 <publicador>${tag("codigoImobiliaria", config.codigoImobiliaria)}${contact?.email ? tag("emailContato", contact.email) : ""}${contact?.nome ? tag("nomeContato", contact.nome) : ""}${contact?.telefone ? tag("telefoneContato", contact.telefone) : ""}</publicador>
 </Imovel>`;
