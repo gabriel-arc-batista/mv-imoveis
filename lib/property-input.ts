@@ -40,6 +40,15 @@ const propertySchema = z
         path: ["price"],
         message: "Informe o preço para incluir o imóvel no XML.",
       });
+    if (
+      data.publish_imovelweb &&
+      !/^\d{5}-?\d{3}$/.test(data.zip_code ?? "")
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["zip_code"],
+        message: "Informe CEP válido com 8 dígitos para publicar no Imovelweb.",
+      });
   });
 
 export function parsePropertyForm(formData: FormData) {
