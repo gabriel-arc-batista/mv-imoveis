@@ -19,12 +19,12 @@ process.stdout.write(
         transaction_type: "aluguel",
       }) as Property,
       property({
-        // Anúncio 100% fictício para homologar omissão de campos opcionais no XSD.
+        // Anúncio fictício: título curto e área construída ausente, com CEP obrigatório.
         id: "92fa6f18-7f50-47c9-bc19-1b6cc93488ee",
-        code: "MV-TESTE-SEM-CEP-AREA",
+        code: "MV-TESTE-SEM-AREA",
         type: "casa",
         title: "Casa",
-        zip_code: null,
+        zip_code: "54400-000",
         covered_area_m2: null,
       }) as Property,
     ],
